@@ -1,16 +1,16 @@
-// Domain types shared by the UI and the mock API layer.
-// These mirror what the Go API will return, so the UI should not need to change
-// when the mock layer is swapped for real HTTP calls.
+// Domain types as the Go API returns them (api/internal/app/domain.go). Keep the two in sync.
 
 export type ID = string
 
 // ---------- Master data ----------
 
 export interface MasterItem {
+  /** Running number per type ("12"), assigned once and never changed. */
   id: ID
-  code: string
-  name: string
-  aliases: string[]
+  /** Thai community name, shown to users. */
+  nameTh: string
+  /** English name, also matched by search. May be empty. */
+  nameEn: string
   image?: string
   active: boolean
 }
@@ -19,32 +19,20 @@ export type Character = MasterItem
 
 export type SkillSlot = 1 | 2 // 1 = upper skill, 2 = lower skill (as stacked in-game)
 
-export interface Skill extends MasterItem {
+/** A reserved skill. Skills are not master data: every character has an upper and a lower one. */
+export interface SkillRef {
   characterId: ID
   slot: SkillSlot
 }
 
 export type Pet = MasterItem
 
-export interface EquipmentSet extends MasterItem {
-  effect2: string
-  effect4: string
-}
-
-export type RingRarity = 'LEGENDARY' | 'RARE' | 'UNCOMMON' | 'COMMON'
-
-export interface Ring extends MasterItem {
-  rarity: RingRarity
-  effect: string
-}
-
-export interface StatType extends MasterItem {
-  unit: 'PERCENT' | 'NUMBER'
-}
+export type EquipmentSet = MasterItem
+export type Ring = MasterItem
+export type StatType = MasterItem
 
 export interface MasterData {
   characters: Character[]
-  skills: Skill[]
   pets: Pet[]
   sets: EquipmentSet[]
   rings: Ring[]
@@ -82,12 +70,6 @@ export interface Group {
   ownerId: ID
   inviteCode: string
   createdAt: string
-}
-
-export interface GroupMember {
-  groupId: ID
-  userId: ID
-  joinedAt: string
 }
 
 // ---------- Defense lineup ----------
@@ -146,7 +128,7 @@ export interface OffenseBuild {
   formation: FormationType
   placements: Placement[]
   ownPets: ID[] // first = primary
-  skillOrder: ID[] // skill ids, index 0 = order 1, max 3
+  skillOrder: SkillRef[] // index 0 = order 1, max 3
   speed: SpeedRule
   recommendations: CharacterRecommendation[]
   createdAt: string

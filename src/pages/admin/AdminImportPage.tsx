@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import * as adminApi from '../../api/admin'
 import { IMPORT_COLUMNS, templateCsv, type ImportRow, type MasterEntity } from '../../api/admin'
+import { useMaster } from '../../hooks/queries'
 import { useToast } from '../../hooks/useToast'
 import { errorMessage } from '../../lib/errors'
 import { ENTITIES, ENTITY_LABEL } from './labels'
@@ -20,6 +21,7 @@ const STATUS_CLASS: Record<ImportRow['status'], string> = {
 }
 
 export function AdminImportPage() {
+  const master = useMaster()
   const qc = useQueryClient()
   const toast = useToast()
   const [entity, setEntity] = useState<MasterEntity>('characters')
@@ -35,7 +37,7 @@ export function AdminImportPage() {
     },
   })
   const commit = useMutation({
-    mutationFn: () => adminApi.adminCommitImport(entity, preview!),
+    mutationFn: () => adminApi.adminCommitImport(entity, csv),
     onSuccess: (r) => {
       qc.invalidateQueries({ queryKey: ['master'] })
       toast(`นำเข้าแล้ว: เพิ่ม ${r.created} แก้ไข ${r.updated}`)
@@ -46,7 +48,7 @@ export function AdminImportPage() {
   })
 
   const download = () => {
-    const blob = new Blob(['﻿' + templateCsv(entity)], { type: 'text/csv;charset=utf-8' })
+    const blob = new Blob(['﻿' + templateCsv(entity, master!)], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `${entity}-template.csv`
@@ -78,12 +80,12 @@ export function AdminImportPage() {
       <section className="card stack">
         <div className="row between wrap">
           <span className="label">1. เตรียมไฟล์ CSV ({ENTITY_LABEL[entity]})</span>
-          <button className="btn btn-sm" onClick={download}>
+          <button className="btn btn-sm" onClick={download} disabled={!master}>
             ดาวน์โหลด template
           </button>
         </div>
         <p className="small muted">
-          คอลัมน์: <code>{IMPORT_COLUMNS[entity].join(', ')}</code> · alias หลายค่าคั่นด้วย <code>|</code> · ระบบจับคู่รายการด้วย code ·
+          คอลัมน์: <code>{IMPORT_COLUMNS[entity].join(', ')}</code> · ระบบจับคู่รายการด้วย id (เลขรันของแต่ละประเภท) ·
           รายการที่ไม่อยู่ในไฟล์จะไม่ถูกปิดใช้งาน ต้องตั้ง active เป็น false เอง
         </p>
         <label className="btn btn-sm" style={{ alignSelf: 'flex-start', cursor: 'pointer' }}>
@@ -132,7 +134,7 @@ export function AdminImportPage() {
               <thead>
                 <tr>
                   <th>แถว</th>
-                  <th>code</th>
+                  <th>id</th>
                   <th>ผล</th>
                   <th>รายละเอียด</th>
                 </tr>
@@ -141,11 +143,11 @@ export function AdminImportPage() {
                 {preview.map((r) => (
                   <tr key={r.line}>
                     <td className="faint">{r.line}</td>
-                    <td>{r.code}</td>
+                    <td>{r.id}</td>
                     <td>
                       <span className={`badge ${STATUS_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
                     </td>
-                    <td className="small muted">{r.error ?? (r.changes.length ? `เปลี่ยน: ${r.changes.join(', ')}` : r.item?.name)}</td>
+                    <td className="small muted">{r.error ?? (r.changes.length ? `เปลี่ยน: ${r.changes.join(', ')}` : r.item?.nameTh)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -154,7 +156,7 @@ export function AdminImportPage() {
         </section>
       )}
 
-      <p className="faint small">การนำเข้ารูปแบบ zip (ชื่อไฟล์ตาม code) จะทำในฝั่ง API ตอนนี้อัปโหลดรูปได้ทีละรายการในหน้า Master Data</p>
+      <p className="faint small">การนำเข้ารูปแบบ zip (ชื่อไฟล์ตาม id) จะทำในฝั่ง API ตอนนี้อัปโหลดรูปได้ทีละรายการในหน้า Master Data</p>
     </div>
   )
 }

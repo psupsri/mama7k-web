@@ -11,7 +11,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import type { FormationType, Placement, Row } from '../types/domain'
+import type { FormationType, Placement, Row, SkillRef } from '../types/domain'
 import { useMaster } from '../hooks/queries'
 import { useToast } from '../hooks/useToast'
 import { rowSize } from '../lib/formation'
@@ -32,8 +32,8 @@ interface Props {
   /** Opens a picker for a slot (tap fallback, also used for keyboard users). */
   onPickSlot: (row: Row, slot: number) => void
   /** Ally builds: reserved skill order and the toggle for the upper/lower boxes. */
-  skillOrder?: string[]
-  onSkillToggle?: (skillId: string) => void
+  skillOrder?: SkillRef[]
+  onSkillToggle?: (skill: SkillRef) => void
 }
 
 /**
@@ -109,7 +109,7 @@ export function FormationEditor({ formation, placements, onChange, variant = 'al
                   <button
                     type="button"
                     className="slot-remove"
-                    aria-label={`เอา ${m?.character[p.characterId]?.name} ออกจากทีม`}
+                    aria-label={`เอา ${m?.character[p.characterId]?.nameTh} ออกจากทีม`}
                     title="เอาออก"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={() => remove(p.characterId)}
@@ -139,7 +139,7 @@ export function FormationEditor({ formation, placements, onChange, variant = 'al
         {dragging && (
           <div className="drag-ghost">
             <ImageSlot item={m?.character[dragging.characterId]} size={48} showTitle={false} />
-            <span>{m?.character[dragging.characterId]?.name}</span>
+            <span>{m?.character[dragging.characterId]?.nameTh}</span>
           </div>
         )}
       </DragOverlay>
@@ -182,7 +182,7 @@ function Roster({ placedIds, removing, onTap }: { placedIds: string[]; removing:
   const list = useMemo(() => {
     const s = q.trim().toLowerCase()
     return (m?.characters ?? []).filter(
-      (c) => (c.active || placedIds.includes(c.id)) && (!s || c.name.toLowerCase().includes(s) || c.aliases.some((a) => a.toLowerCase().includes(s))),
+      (c) => (c.active || placedIds.includes(c.id)) && (!s || c.nameTh.toLowerCase().includes(s) || c.nameEn.toLowerCase().includes(s)),
     )
   }, [m, q, placedIds])
 
@@ -217,11 +217,11 @@ function RosterItem({ characterId, placed, onTap }: { characterId: string; place
       {...attributes}
       {...listeners}
       onClick={onTap}
-      aria-label={placed ? `${c?.name} (อยู่ในทีม แตะเพื่อเอาออก)` : `ใส่ ${c?.name} ในทีม`}
+      aria-label={placed ? `${c?.nameTh} (อยู่ในทีม แตะเพื่อเอาออก)` : `ใส่ ${c?.nameTh} ในทีม`}
       aria-pressed={placed}
     >
       <ImageSlot item={c} size={40} showTitle={false} />
-      <span className="slot-name">{c?.name}</span>
+      <span className="slot-name">{c?.nameTh}</span>
       {placed && (
         <span className="roster-check">
           <Icon name="check" size={12} strokeWidth={3} />

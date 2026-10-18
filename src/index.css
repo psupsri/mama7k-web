@@ -20,7 +20,6 @@
   --gold-text: #8f5f00;
   --gold-soft-bg: #fff6df;
   --gold-soft-border: #efd38c;
-  --gold-dashed-bg: #fffaf0;
 
   --win: #22a88f;
   --win-ink: #ffffff;
@@ -95,7 +94,6 @@
   --gold-text: #f0b23e;
   --gold-soft-bg: #2b2414;
   --gold-soft-border: #5c4a1e;
-  --gold-dashed-bg: #1a1710;
 
   --win: #3fc1a8;
   --win-ink: #0b1f1a;
@@ -412,14 +410,6 @@ button:disabled {
   font-size: 12px;
   border-radius: var(--radius-sm);
 }
-.btn-dashed {
-  border-style: dashed;
-  border-color: var(--gold-soft-border);
-  background: var(--gold-dashed-bg);
-  color: var(--gold-text);
-  font-family: var(--font-display);
-  font-weight: 700;
-}
 .icon-btn {
   width: 40px;
   height: 40px;
@@ -625,25 +615,6 @@ button.chip[aria-pressed='true'] {
 }
 button.slot:hover {
   border-color: var(--gold);
-}
-.skill-badges {
-  position: absolute;
-  top: -8px;
-  right: -6px;
-  display: flex;
-  gap: 3px;
-}
-.num-badge {
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background: var(--gold);
-  color: var(--gold-ink);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 11px;
-  display: grid;
-  place-items: center;
 }
 
 /* ---------- Stats ---------- */

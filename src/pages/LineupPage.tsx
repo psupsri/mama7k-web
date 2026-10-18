@@ -87,10 +87,10 @@ export function LineupPage() {
         <span aria-hidden="true">/</span>
         {buildId ? (
           <Link to={listUrl} className="muted">
-            {lineup.data.placements.map((p) => m.character[p.characterId]?.name).join(' · ')}
+            {lineup.data.placements.map((p) => m.character[p.characterId]?.nameTh).join(' · ')}
           </Link>
         ) : (
-          <span>{lineup.data.placements.map((p) => m.character[p.characterId]?.name).join(' · ')}</span>
+          <span>{lineup.data.placements.map((p) => m.character[p.characterId]?.nameTh).join(' · ')}</span>
         )}
       </nav>
 
@@ -190,7 +190,7 @@ function Filters({
           {chips.map((id) => (
             <button key={id} className="chip chip-img" aria-pressed={enemyPetId === id} onClick={() => onPet(id)}>
               <ImageSlot item={m.pet[id]} size={24} round showTitle={false} />
-              {m.pet[id]?.name}
+              {m.pet[id]?.nameTh}
             </button>
           ))}
           <button className="chip" onClick={onPickPet}>

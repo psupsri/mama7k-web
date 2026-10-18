@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import * as authApi from '../api/auth'
-import { resetDb } from '../mock/db'
+import { errorMessage } from '../lib/errors'
 import { useMe } from '../hooks/queries'
 import { applyTheme, getTheme, type Theme } from '../lib/theme'
 import { Icon } from './Icon'
@@ -67,7 +67,7 @@ export function Layout() {
       <main id="main" className="container">
         <Outlet />
       </main>
-      <DevPanel />
+      <DevLogin />
     </>
   )
 }
@@ -90,63 +90,57 @@ function ThemeToggle() {
   )
 }
 
-/** Mock-only tool for testing permissions as different users. Removed when the real API lands. */
-function DevPanel() {
+const DEV_USERS = [
+  { email: 'pisit@example.com', name: 'Pisit', note: 'Super Admin · Owner กิลด์มาม่า · สมาชิก Night Raid' },
+  { email: 'mee@example.com', name: 'หมีน้อย', note: 'สมาชิกกิลด์มาม่า' },
+  { email: 'shadow@example.com', name: 'ShadowBlade', note: 'Moderator · Owner Night Raid' },
+  { email: 'fah@example.com', name: 'สายฟ้า', note: 'Owner ห้องลับสายฟ้า (นอก 2 Group แรก)' },
+  { email: 'banned@example.com', name: 'โดนแบน', note: 'ถูกระงับ: login ไม่ได้' },
+]
+
+/** Development-only quick login with the seeded users (password123). Not in production builds. */
+function DevLogin() {
   const [open, setOpen] = useState(false)
   const { data: me } = useMe()
   const qc = useQueryClient()
   const toast = useToast()
-  const { data: users = [] } = useQuery({ queryKey: ['devUsers'], queryFn: authApi.devListUsers, enabled: open })
+  if (!import.meta.env.DEV) return null
 
-  const switchTo = async (id: string | null) => {
-    await authApi.devSwitchUser(id)
-    qc.clear()
-    setOpen(false)
-    const u = users.find((x) => x.id === id)
-    toast(u?.suspended ? 'ผู้ใช้นี้ถูกระงับ จึงเข้าสู่ระบบไม่ได้ (เป็น Guest)' : `สลับเป็น ${u?.displayName ?? 'Guest'}`)
+  const switchTo = async (email: string | null) => {
+    try {
+      if (email) await authApi.login(email, 'password123')
+      else await authApi.logout()
+      qc.clear()
+      setOpen(false)
+      toast(email ? `เข้าสู่ระบบเป็น ${email}` : 'ออกจากระบบแล้ว (Guest)')
+    } catch (e) {
+      toast(errorMessage(e), true)
+    }
   }
 
   return (
     <>
       <button className="dev-fab" onClick={() => setOpen(true)}>
-        Mock: {me?.displayName ?? 'Guest'}
+        Dev: {me?.displayName ?? 'Guest'}
       </button>
       {open && (
-        <Modal title="Mock tools" onClose={() => setOpen(false)}>
-          <p className="muted small">สลับผู้ใช้เพื่อทดสอบสิทธิ์การมองเห็น Build, Group และ Admin ข้อมูลเก็บใน localStorage ของเบราว์เซอร์นี้</p>
+        <Modal title="Dev login" onClose={() => setOpen(false)}>
+          <p className="muted small">
+            เข้าสู่ระบบด้วยผู้ใช้ตัวอย่างจาก seed เพื่อทดสอบสิทธิ์ (รหัสผ่าน password123) ล้างข้อมูลกลับเป็นค่าเริ่มต้นด้วย <code>go run ./cmd/seed</code> ในโฟลเดอร์ api
+          </p>
           <div className="stack" style={{ gap: 6 }}>
-            <button className="btn" style={{ justifyContent: 'flex-start' }} onClick={() => switchTo(null)} aria-pressed={!me}>
+            <button className="btn" style={{ justifyContent: 'flex-start' }} onClick={() => switchTo(null)}>
               Guest (ไม่ได้เข้าสู่ระบบ)
             </button>
-            {users.map((u) => (
-              <button key={u.id} className="btn" style={{ justifyContent: 'space-between' }} onClick={() => switchTo(u.id)}>
+            {DEV_USERS.map((u) => (
+              <button key={u.email} className="btn" style={{ justifyContent: 'space-between', textAlign: 'left' }} onClick={() => switchTo(u.email)}>
                 <span>
-                  {u.displayName} <span className="faint small">{u.email}</span>
+                  {u.name} <span className="faint small">{u.email}</span>
                 </span>
-                <span className="row" style={{ gap: 4 }}>
-                  {u.role !== 'USER' && <span className="badge badge-gold">{u.role}</span>}
-                  {u.suspended && <span className="badge badge-danger">ถูกระงับ</span>}
-                  {!u.emailVerified && <span className="badge badge-soft">ยังไม่ยืนยันอีเมล</span>}
-                  {me?.id === u.id && <span className="badge badge-public">ใช้อยู่</span>}
-                </span>
+                <span className="small muted">{u.note}</span>
               </button>
             ))}
           </div>
-          <hr className="divider" />
-          <Link to="/demo/visibility" className="btn btn-primary" onClick={() => setOpen(false)}>
-            ดูตัวอย่างสิทธิ์ Group และ Build
-          </Link>
-          <button
-            className="btn btn-danger"
-            onClick={() => {
-              resetDb()
-              qc.clear()
-              setOpen(false)
-              toast('รีเซ็ตข้อมูล mock แล้ว')
-            }}
-          >
-            รีเซ็ตข้อมูล mock ทั้งหมด
-          </button>
         </Modal>
       )}
     </>

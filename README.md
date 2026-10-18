@@ -1,40 +1,44 @@
 # 7K Re Community — Web client
 
-React + TypeScript + Vite. ตอนนี้ยังไม่ต่อ API ข้อมูลทั้งหมดมาจาก mock ที่เก็บใน localStorage ของเบราว์เซอร์
+React + TypeScript + Vite. Talks to the Go API in `../api`; in development Vite proxies `/api` and `/media` to it.
 
 ## Run
 
 ```bash
-npm install
-npm run dev      # http://localhost:5173
-npm test         # business-rule tests of the mock API (FR sections)
+docker compose up -d db                       # repo root: PostgreSQL on :5433
+(cd api && go run ./cmd/seed)                 # sample users + groups (password123); add -sample for game data
+(cd api && go run ./cmd/server)               # API on :8787
+cd web && npm install && npm run dev          # http://localhost:5173
+```
+
+`API_URL` overrides the proxy target (default `http://localhost:8787`).
+
+```bash
+npm test         # unit tests for pure helpers (business rules are tested in the Go API)
 npm run build
 ```
 
-## Mock users
+## Dev login
 
-ปุ่ม **Mock** มุมล่างซ้ายใช้สลับผู้ใช้และรีเซ็ตข้อมูล หรือจะเข้าสู่ระบบด้วยอีเมลด้านล่างกับรหัสผ่านอะไรก็ได้
+In development a **Dev** button (bottom left) signs in as any seeded user, to check what each one can see:
 
-| ผู้ใช้ | อีเมล | Role | Group |
+| User | Email | Role | Groups |
 | --- | --- | --- | --- |
-| Pisit | pisit@example.com | SUPER_ADMIN | Owner กิลด์มาม่า, สมาชิก Night Raid |
-| หมีน้อย | mee@example.com | USER | สมาชิก กิลด์มาม่า |
-| ShadowBlade | shadow@example.com | MODERATOR | Owner Night Raid |
-| สายฟ้า | fah@example.com | USER | Owner ห้องลับสายฟ้า |
-| โดนแบน | banned@example.com | USER (ถูกระงับ) | — |
+| Pisit | pisit@example.com | SUPER_ADMIN | owner กิลด์มาม่า, member Night Raid |
+| หมีน้อย | mee@example.com | USER | member กิลด์มาม่า |
+| ShadowBlade | shadow@example.com | MODERATOR | owner Night Raid |
+| สายฟ้า | fah@example.com | USER | owner ห้องลับสายฟ้า |
+| โดนแบน | banned@example.com | USER (suspended) | — |
 
-Invite code ตัวอย่าง: `MAMA7K`, `NIGHT01`, `FAHFAH`
+Emails (verification, password reset) are written to the API log in development; open the link from there.
 
 ## Structure
 
 ```
 src/
-  api/         mock API: business rules the Go API will own (access, duplicates, votes, groups, admin)
-  mock/        seed data + in-memory DB persisted to localStorage
-  types/       domain types shared with the future API contract
+  api/         one module per API area; client.ts wraps fetch and API errors
+  types/       domain types, kept in sync with api/internal/app/domain.go
   hooks/       React Query hooks and toast hook
-  components/  UI building blocks (Formation, ImageSlot, BuildCard, VotePanel, ...)
+  components/  UI building blocks (Formation, FormationEditor, ImageSlot, BuildCard, VotePanel, ...)
   pages/       routes; pages/admin = Admin + Master Data
 ```
-
-UI เรียกเฉพาะฟังก์ชันใน `src/api/*` ตอนต่อ Go API ให้เปลี่ยน implementation ในโฟลเดอร์นี้เป็น HTTP call แล้วลบ `src/mock/`, `api/internal.ts` และ Mock panel ใน `components/Layout.tsx`

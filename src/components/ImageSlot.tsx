@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { MasterItem } from '../types/domain'
 
 interface Props {
-  item?: Pick<MasterItem, 'name' | 'image'>
+  item?: Pick<MasterItem, 'nameTh' | 'image'>
   size?: number
   round?: boolean
   ring?: string // outline color, e.g. primary pet or enemy pet
@@ -16,7 +16,7 @@ interface Props {
  */
 export function ImageSlot({ item, size = 40, round = false, ring, dim, showTitle = true }: Props) {
   const [broken, setBroken] = useState(false)
-  const name = item?.name ?? '?'
+  const name = item?.nameTh ?? '?'
   const hasImage = !!item?.image && !broken
   const radius = round ? size / 2 : Math.max(6, Math.round(size * 0.26))
   return (

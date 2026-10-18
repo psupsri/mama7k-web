@@ -19,7 +19,7 @@ interface Props<T extends MasterItem> {
   onClear?: () => void
 }
 
-/** Searchable image grid for picking master data (by name or alias). Inactive items are hidden. */
+/** Searchable image grid for picking master data (by Thai or English name). Inactive items are hidden. */
 export function Picker<T extends MasterItem>({
   title,
   items,
@@ -39,7 +39,7 @@ export function Picker<T extends MasterItem>({
     return items.filter(
       (i) =>
         (i.active || selected.includes(i.id)) &&
-        (!s || i.name.toLowerCase().includes(s) || i.aliases.some((a) => a.toLowerCase().includes(s))),
+        (!s || i.nameTh.toLowerCase().includes(s) || i.nameEn.toLowerCase().includes(s)),
     )
   }, [items, q, selected])
 
@@ -98,7 +98,7 @@ export function Picker<T extends MasterItem>({
               onClick={() => toggle(i.id)}
             >
               <ImageSlot item={i} size={52} round={round} showTitle={false} />
-              <span>{i.name}</span>
+              <span>{i.nameTh}</span>
               {subtitle?.(i) && <span className="faint small">{subtitle(i)}</span>}
             </button>
           )

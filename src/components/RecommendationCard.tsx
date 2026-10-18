@@ -21,11 +21,11 @@ export function RecommendationCard({
   const m = useMaster()
   const c = m?.character[rec.characterId]
   return (
-    <article className="card rec-card" aria-label={c?.name}>
+    <article className="card rec-card" aria-label={c?.nameTh}>
       <div className="rec-head" style={{ background: HEAD_BG[index % 3] }}>
         <ImageSlot item={c} size={52} ring={ACCENTS[index % 3]} />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16 }}>{c?.name}</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16 }}>{c?.nameTh}</span>
           <span className="small muted">
             {placement && `แถว${ROW_LABEL[placement.row]}`}
             {skillOrders.length > 0 && ` · สกิลลำดับ ${skillOrders.join(', ')}`}

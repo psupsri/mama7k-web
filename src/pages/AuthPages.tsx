@@ -1,6 +1,6 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as authApi from '../api/auth'
 import { useMe } from '../hooks/queries'
 import { useToast } from '../hooks/useToast'
@@ -64,7 +64,7 @@ export function LoginPage() {
           ลืมรหัสผ่าน?
         </Link>
       </form>
-      <p className="faint small">Mock: ใช้อีเมลของผู้ใช้ตัวอย่าง เช่น pisit@example.com กับรหัสผ่านอะไรก็ได้ หรือสลับผู้ใช้จากปุ่ม Mock ด้านล่างซ้าย</p>
+      {import.meta.env.DEV && <p className="faint small">Dev: ผู้ใช้ตัวอย่าง เช่น pisit@example.com รหัสผ่าน password123 หรือใช้ปุ่ม Dev ด้านล่างซ้าย</p>}
     </AuthCard>
   )
 }
@@ -112,13 +112,20 @@ export function RegisterPage() {
   )
 }
 
+/** /reset-password asks for an email; /reset-password?token=… (from the email) sets a new password. */
 export function ResetPasswordPage() {
+  const [params] = useSearchParams()
+  const token = params.get('token')
+  return token ? <ConfirmReset token={token} /> : <RequestReset />
+}
+
+function RequestReset() {
   const [email, setEmail] = useState('')
   const reset = useMutation({ mutationFn: () => authApi.requestPasswordReset(email) })
   return (
     <AuthCard title="ลืมรหัสผ่าน" footer={<Link to="/login">กลับไปเข้าสู่ระบบ</Link>}>
       {reset.isSuccess ? (
-        <p>ถ้ามีบัญชีที่ใช้อีเมลนี้ เราได้ส่งลิงก์ตั้งรหัสผ่านใหม่ไปแล้ว</p>
+        <p>ถ้ามีบัญชีที่ใช้อีเมลนี้ เราได้ส่งลิงก์ตั้งรหัสผ่านใหม่ไปแล้ว ลิงก์ใช้ได้ 1 ชั่วโมง</p>
       ) : (
         <form
           className="stack"
@@ -135,6 +142,59 @@ export function ResetPasswordPage() {
             ส่งลิงก์ตั้งรหัสผ่านใหม่
           </button>
         </form>
+      )}
+    </AuthCard>
+  )
+}
+
+function ConfirmReset({ token }: { token: string }) {
+  const [password, setPassword] = useState('')
+  const confirm = useMutation({ mutationFn: () => authApi.confirmPasswordReset(token, password) })
+  return (
+    <AuthCard title="ตั้งรหัสผ่านใหม่" footer={<Link to="/login">กลับไปเข้าสู่ระบบ</Link>}>
+      {confirm.isSuccess ? (
+        <p>
+          ตั้งรหัสผ่านใหม่แล้ว ทุกเครื่องที่เคยเข้าสู่ระบบถูกออกจากระบบ <Link to="/login">เข้าสู่ระบบอีกครั้ง</Link>
+        </p>
+      ) : (
+        <form
+          className="stack"
+          onSubmit={(e) => {
+            e.preventDefault()
+            confirm.mutate()
+          }}
+        >
+          <label className="field">
+            <span>รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</span>
+            <input className="input" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+          </label>
+          {confirm.error && <p className="error-text">{errorMessage(confirm.error)}</p>}
+          <button className="btn btn-primary" disabled={confirm.isPending}>
+            บันทึกรหัสผ่านใหม่
+          </button>
+        </form>
+      )}
+    </AuthCard>
+  )
+}
+
+/** Landing page for the verification email link: /verify-email?token=… */
+export function VerifyEmailPage() {
+  const [params] = useSearchParams()
+  const qc = useQueryClient()
+  const token = params.get('token') ?? ''
+  const verify = useQuery({ queryKey: ['verifyEmail', token], queryFn: () => authApi.verifyEmail(token).then(() => true), enabled: !!token })
+  useEffect(() => {
+    if (verify.isSuccess) qc.invalidateQueries({ queryKey: ['me'] })
+  }, [verify.isSuccess, qc])
+  return (
+    <AuthCard title="ยืนยันอีเมล" footer={<Link to="/">ไปหน้าแรก</Link>}>
+      {!token || verify.isError ? (
+        <p className="error-text">{verify.error ? errorMessage(verify.error) : 'ลิงก์ไม่ถูกต้อง'}</p>
+      ) : verify.isSuccess ? (
+        <p>ยืนยันอีเมลแล้ว ตอนนี้สร้าง Build และโหวตได้</p>
+      ) : (
+        <p className="muted">กำลังยืนยัน…</p>
       )}
     </AuthCard>
   )
@@ -164,12 +224,10 @@ function Profile() {
     },
     onError: (e) => toast(errorMessage(e), true),
   })
-  const verify = useMutation({
-    mutationFn: authApi.verifyEmail,
-    onSuccess: () => {
-      qc.invalidateQueries()
-      toast('ยืนยันอีเมลแล้ว')
-    },
+  const resend = useMutation({
+    mutationFn: authApi.resendVerification,
+    onSuccess: () => toast('ส่งลิงก์ยืนยันไปที่อีเมลแล้ว'),
+    onError: (e) => toast(errorMessage(e), true),
   })
   const del = useMutation({
     mutationFn: authApi.deleteAccount,
@@ -187,8 +245,8 @@ function Profile() {
       {!me.emailVerified && (
         <div className="banner row wrap between">
           <span>ยังไม่ได้ยืนยันอีเมล จึงยังสร้าง Build หรือโหวตไม่ได้</span>
-          <button className="btn btn-sm btn-primary" onClick={() => verify.mutate()}>
-            จำลองการกดลิงก์ยืนยัน
+          <button className="btn btn-sm btn-primary" disabled={resend.isPending} onClick={() => resend.mutate()}>
+            ส่งลิงก์ยืนยันอีกครั้ง
           </button>
         </div>
       )}

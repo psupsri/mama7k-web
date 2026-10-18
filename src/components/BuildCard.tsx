@@ -30,7 +30,7 @@ export function BuildCard({ s, to, active }: { s: BuildSummary; to?: string; act
         ))}
         {b.ownPets[0] && (
           <span className="small muted" style={{ marginLeft: 6 }}>
-            Pet {m?.pet[b.ownPets[0]]?.name}
+            Pet {m?.pet[b.ownPets[0]]?.nameTh}
             {b.ownPets.length > 1 ? ` +${b.ownPets.length - 1}` : ''}
           </span>
         )}

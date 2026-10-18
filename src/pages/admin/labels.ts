@@ -2,7 +2,6 @@ import type { MasterEntity } from '../../api/admin'
 
 export const ENTITY_LABEL: Record<MasterEntity, string> = {
   characters: 'ตัวละคร',
-  skills: 'สกิล',
   pets: 'Pet',
   sets: 'เซ็ตอุปกรณ์',
   rings: 'แหวน',

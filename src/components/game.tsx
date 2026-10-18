@@ -23,7 +23,7 @@ export function SetChip({ setId, primary }: { setId: string; primary?: boolean }
   return (
     <span className={`chip chip-img${primary ? ' chip-primary' : ''}`}>
       <ImageSlot item={s} size={26} round />
-      {s?.name ?? setId}
+      {s?.nameTh ?? setId}
     </span>
   )
 }
@@ -51,7 +51,7 @@ export function StatPills({ stats }: { stats: StatTarget[] }) {
         const st = m?.stat[s.statId]
         return (
           <div key={s.statId} className="stat-pill">
-            <span style={{ fontSize: 13 }}>{st?.name ?? s.statId}</span>
+            <span style={{ fontSize: 13 }}>{st?.nameTh ?? s.statId}</span>
             {s.value === undefined ? (
               <span className="small" style={{ color: 'var(--gold-text)', fontWeight: 600 }}>
                 เน้น
@@ -59,7 +59,7 @@ export function StatPills({ stats }: { stats: StatTarget[] }) {
             ) : (
               <span className="num" style={{ fontSize: 16 }}>
                 {s.value}
-                <span className="small muted">{st?.unit === 'PERCENT' ? '%+' : '+'}</span>
+                <span className="small muted">+</span>
               </span>
             )}
           </div>
@@ -88,13 +88,13 @@ export function RingLabel({ option }: { option: RingOption }) {
   return (
     <>
       <span style={{ fontWeight: 600 }}>
-        {m?.ring[option.ringId]?.name} <span className="star">★{option.star}</span>
+        {m?.ring[option.ringId]?.nameTh} <span className="star">★{option.star}</span>
       </span>
       {option.stack && (
         <>
           <span className="muted">+ ซ้อน</span>
           <span style={{ fontWeight: 600 }}>
-            {m?.ring[option.stack.ringId]?.name}
+            {m?.ring[option.stack.ringId]?.nameTh}
             {option.stack.star && <span className="star"> ★{option.stack.star}</span>}
           </span>
         </>
@@ -130,7 +130,7 @@ export function PetGroup({ ids, emptyText = 'Pet อะไรก็ได้' }:
           <span className="stack" style={{ '--gap': '4px', alignItems: 'center' } as CSSProperties}>
             <ImageSlot item={m?.pet[id]} size={i === 0 ? 52 : 36} ring={i === 0 ? 'var(--gold)' : undefined} />
             <span className="small" style={i === 0 ? { color: 'var(--gold-text)', fontWeight: 600 } : undefined}>
-              {m?.pet[id]?.name}
+              {m?.pet[id]?.nameTh}
             </span>
           </span>
         </span>
@@ -152,7 +152,7 @@ export function CounterPets({ ids }: { ids: string[] }) {
           {ids.map((id) => (
             <span key={id} className="row" style={{ gap: 6 }}>
               <ImageSlot item={m?.pet[id]} size={24} ring="var(--enemy-text)" />
-              <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{m?.pet[id]?.name}</strong>
+              <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{m?.pet[id]?.nameTh}</strong>
             </span>
           ))}
         </>

@@ -1,4 +1,4 @@
-import type { BattleResult, EquipLevel, RingRarity, Visibility } from '../types/domain'
+import type { BattleResult, EquipLevel, Visibility } from '../types/domain'
 
 export const EQUIP_LEVELS: EquipLevel[] = ['EXACT_EQUIPMENT', 'SAME_SET_DIFFERENT_SUBSTATS', 'CHARACTERS_ONLY']
 
@@ -26,13 +26,6 @@ export const VISIBILITY_HINT: Record<Visibility, string> = {
   PUBLIC: 'ทุกคนดูได้ รวมถึงผู้ที่ไม่ได้เข้าสู่ระบบ',
   GROUP: 'เฉพาะสมาชิกของ Group ที่เลือก',
   PRIVATE: 'เห็นได้คนเดียว',
-}
-
-export const RARITY_LABEL: Record<RingRarity, string> = {
-  LEGENDARY: 'Legendary',
-  RARE: 'Rare',
-  UNCOMMON: 'Uncommon',
-  COMMON: 'Common',
 }
 
 export function formatPct(v: number | null) {

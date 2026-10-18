@@ -46,7 +46,7 @@ export function HomePage() {
           {selected.map((id) => (
             <button key={id} className="chip chip-img" aria-pressed="true" onClick={() => setSelected(selected.filter((x) => x !== id))} title="เอาออก">
               <ImageSlot item={m?.character[id]} size={26} round showTitle={false} />
-              {m?.character[id]?.name}
+              {m?.character[id]?.nameTh}
               <Icon name="close" size={14} />
             </button>
           ))}
@@ -64,7 +64,7 @@ export function HomePage() {
         <ErrorState error={error} />
       ) : data!.length === 0 ? (
         <Empty>
-          ยังไม่มีบ้านศัตรูที่มีตัวละครเหล่านี้
+          {selected.length ? 'ยังไม่มีบ้านศัตรูที่มีตัวละครเหล่านี้' : 'ยังไม่มีบ้านศัตรูในระบบ'}
           {me && (
             <div style={{ marginTop: 12 }}>
               <Link to={`/lineups/new?c=${selected.join(',')}`} className="btn btn-primary">

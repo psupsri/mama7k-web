@@ -9,11 +9,12 @@ import type {
   Placement,
   RingOption,
   Row,
+  SkillRef,
   Star,
   Visibility,
 } from '../types/domain'
 import { useBuild, useLineup, useMaster, useMyGroups, type MasterLookup } from '../hooks/queries'
-import { FORMATIONS, fitPlacements } from '../lib/formation'
+import { FORMATIONS, fitPlacements, SKILL_LABEL } from '../lib/formation'
 import { VISIBILITY_HINT, VISIBILITY_LABEL } from '../lib/labels'
 import { EnemyLineupCard } from '../components/EnemyLineupCard'
 import { FormationEditor } from '../components/FormationEditor'
@@ -134,16 +135,17 @@ function BuildEditor({
     setF((x) => ({
       ...x,
       placements,
-      skillOrder: x.skillOrder.filter((sid) => ids.includes(m.skill[sid]?.characterId)),
+      skillOrder: x.skillOrder.filter((s) => ids.includes(s.characterId)),
       recommendations: ids.map((id) => x.recommendations.find((r) => r.characterId === id) ?? emptyRec(id)),
     }))
   }
 
   // Tapping an upper/lower skill box reserves it as the next order, or releases it.
-  const toggleSkill = (skillId: string) => {
-    if (f.skillOrder.includes(skillId)) set('skillOrder', f.skillOrder.filter((x) => x !== skillId))
+  const toggleSkill = (skill: SkillRef) => {
+    const same = (x: SkillRef) => x.characterId === skill.characterId && x.slot === skill.slot
+    if (f.skillOrder.some(same)) set('skillOrder', f.skillOrder.filter((x) => !same(x)))
     else if (f.skillOrder.length >= 3) toast('จองสกิลได้สูงสุด 3 ลำดับ', true)
-    else set('skillOrder', [...f.skillOrder, skillId])
+    else set('skillOrder', [...f.skillOrder, skill])
   }
 
   const updateRec = (characterId: string, patch: Partial<CharacterRecommendation>) =>
@@ -155,9 +157,6 @@ function BuildEditor({
   const slotPick = picker?.kind === 'slot' ? picker : null
   const slotChar = slotPick ? f.placements.find((p) => p.row === slotPick.row && p.slot === slotPick.slot) : undefined
 
-  const placedSkills = f.placements.flatMap((p) =>
-    m.skills.filter((s) => s.characterId === p.characterId).map((s) => ({ ...s, name: `${m.character[p.characterId]?.name} · ${s.name}` })),
-  )
 
   // ---- client-side checks (the API validates again) ----
   const problems: string[] = []
@@ -165,7 +164,7 @@ function BuildEditor({
   if (f.visibility === 'GROUP' && f.groupIds.length === 0) problems.push('เลือกอย่างน้อย 1 Group')
   for (const r of f.recommendations) {
     if (r.ringStackRequired && r.rings.some((o) => !o.stack))
-      problems.push(`${m.character[r.characterId]?.name}: ทุกตัวเลือกแหวนต้องมีแหวนซ้อน`)
+      problems.push(`${m.character[r.characterId]?.nameTh}: ทุกตัวเลือกแหวนต้องมีแหวนซ้อน`)
   }
 
   const submit = () => {
@@ -223,13 +222,15 @@ function BuildEditor({
       <EditorSection title="3. ลำดับสกิลจอง" hint="แตะช่องสกิลบน/ล่างข้างตัวละครในข้อ 2 · สูงสุด 3 ลำดับ">
         {f.skillOrder.length > 0 && (
           <ol className="stack" style={{ gap: 6, margin: 0, padding: 0, listStyle: 'none' }}>
-            {f.skillOrder.map((sid, i) => (
-              <li key={`${sid}-${i}`} className="row" style={{ padding: '6px 10px', borderRadius: 10, background: 'var(--surface-2)' }}>
+            {f.skillOrder.map((s, i) => (
+              <li key={`${s.characterId}-${s.slot}`} className="row" style={{ padding: '6px 10px', borderRadius: 10, background: 'var(--surface-2)' }}>
                 <span className="num" style={{ color: 'var(--gold-text)', width: 16 }}>
                   {i + 1}
                 </span>
-                <ImageSlot item={m.skill[sid]} size={28} />
-                <span className="grow">{placedSkills.find((s) => s.id === sid)?.name}</span>
+                <ImageSlot item={m.character[s.characterId]} size={28} />
+                <span className="grow">
+                  {m.character[s.characterId]?.nameTh} <span className="small muted">{SKILL_LABEL[s.slot]}</span>
+                </span>
                 <MoveButtons index={i} length={f.skillOrder.length} onMove={(to) => set('skillOrder', move(f.skillOrder, i, to))} />
                 <button type="button" className="icon-btn" aria-label="ลบ" onClick={() => set('skillOrder', f.skillOrder.filter((_, j) => j !== i))}>
                   <Icon name="close" size={16} />
@@ -350,7 +351,7 @@ function BuildEditor({
       {/* ---- pickers ---- */}
       {slotPick && (
         <Picker
-          title={slotChar ? `เปลี่ยน ${m.character[slotChar.characterId]?.name}` : 'เลือกตัวละคร'}
+          title={slotChar ? `เปลี่ยน ${m.character[slotChar.characterId]?.nameTh}` : 'เลือกตัวละคร'}
           items={m.characters}
           selected={slotChar ? [slotChar.characterId] : []}
           disabledIds={f.placements.length >= 3 && !slotChar ? m.characters.map((c) => c.id) : f.placements.map((p) => p.characterId)}
@@ -370,12 +371,11 @@ function BuildEditor({
       )}
       {picker?.kind === 'sets' && (
         <Picker
-          title={`เซ็ตสำหรับ ${m.character[picker.characterId]?.name}`}
+          title={`เซ็ตสำหรับ ${m.character[picker.characterId]?.nameTh}`}
           items={m.sets}
           round
           multiple
           selected={f.recommendations.find((r) => r.characterId === picker.characterId)?.sets ?? []}
-          subtitle={(s) => s.aliases[0]}
           onChange={(v) => updateRec(picker.characterId, { sets: v })}
           onClose={() => setPicker(null)}
         />
@@ -444,7 +444,7 @@ function OrderedChips({
         return (
           <span key={id} className={`chip chip-img${isPrimary ? ' chip-primary' : ''}`} style={{ paddingRight: 4 }}>
             <ImageSlot item={lookup[id]} size={26} round={kind === 'set'} />
-            {lookup[id]?.name}
+            {lookup[id]?.nameTh}
             {primary && !isPrimary && (
               <button type="button" className="btn btn-sm btn-ghost" style={{ minHeight: 26, padding: '0 6px' }} onClick={() => onChange([id, ...ids.filter((x) => x !== id)])}>
                 ตั้งเป็นหลัก
@@ -454,7 +454,7 @@ function OrderedChips({
               type="button"
               className="icon-btn"
               style={{ width: 26, height: 26, color: 'inherit' }}
-              aria-label={`เอา ${lookup[id]?.name} ออก`}
+              aria-label={`เอา ${lookup[id]?.nameTh} ออก`}
               onClick={() => onChange(ids.filter((x) => x !== id))}
             >
               <Icon name="close" size={14} />
@@ -489,7 +489,7 @@ function RecEditor({
     <article className="card stack" style={{ gap: 14, background: 'var(--bg)' }}>
       <div className="row">
         <ImageSlot item={c} size={44} />
-        <h3>{c?.name}</h3>
+        <h3>{c?.nameTh}</h3>
       </div>
 
       <div className="stack" style={{ gap: 6 }}>
@@ -509,7 +509,7 @@ function RecEditor({
             >
               {activeStats.map((st) => (
                 <option key={st.id} value={st.id} disabled={st.id !== s.statId && rec.stats.some((x) => x.statId === st.id)}>
-                  {st.name}
+                  {st.nameTh}
                 </option>
               ))}
             </select>
@@ -566,7 +566,7 @@ function RecEditor({
                 <select className="select input-sm grow" aria-label="แหวนหลัก" value={r.ringId} onChange={(e) => updateRing(i, { ringId: e.target.value })}>
                   {activeRings.map((x) => (
                     <option key={x.id} value={x.id}>
-                      {x.name}
+                      {x.nameTh}
                     </option>
                   ))}
                 </select>
@@ -593,7 +593,7 @@ function RecEditor({
                     .filter((x) => x.id !== r.ringId)
                     .map((x) => (
                       <option key={x.id} value={x.id}>
-                        {x.name}
+                        {x.nameTh}
                       </option>
                     ))}
                 </select>
@@ -620,6 +620,8 @@ function RecEditor({
           <button
             type="button"
             className="btn btn-sm"
+            disabled={activeRings.length === 0}
+            title={activeRings.length === 0 ? 'ยังไม่มีแหวนใน Master Data' : undefined}
             onClick={() => onChange({ rings: [...rec.rings, { ringId: activeRings[0].id, star: 6 }] })}
           >
             <Icon name="plus" size={14} /> เพิ่มตัวเลือกแหวน

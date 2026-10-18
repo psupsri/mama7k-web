@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import type { FormationType, Placement, Row } from '../types/domain'
+import type { FormationType, Placement, Row, SkillRef } from '../types/domain'
 import { useMaster } from '../hooks/queries'
-import { ROW_LABEL, ROWS, rowSize, skillAt } from '../lib/formation'
+import { ROW_LABEL, ROWS, rowSize, SKILL_LABEL, skillOrderOf } from '../lib/formation'
 import { ImageSlot } from './ImageSlot'
 
 /**
@@ -15,30 +15,28 @@ export function SkillColumn({
   onToggle,
 }: {
   characterId: string
-  skillOrder: string[]
+  skillOrder: SkillRef[]
   small?: boolean
-  onToggle?: (skillId: string) => void
+  onToggle?: (skill: SkillRef) => void
 }) {
   const m = useMaster()
   return (
     <span className={`skill-col${small ? ' sm' : ''}`}>
       {([1, 2] as const).map((pos) => {
-        const sk = skillAt(m, characterId, pos)
-        const order = sk ? skillOrder.indexOf(sk.id) + 1 : 0
-        const label = `${pos === 1 ? 'สกิลบน' : 'สกิลล่าง'}${order ? ` จองลำดับ ${order}` : ''}`
+        const order = skillOrderOf(skillOrder, characterId, pos)
+        const label = `${SKILL_LABEL[pos]}${order ? ` จองลำดับ ${order}` : ''}`
         const cls = `skill-box${order ? ' on' : ''}`
         return onToggle ? (
           <button
             key={pos}
             type="button"
             className={cls}
-            aria-label={`${m?.character[characterId]?.name} ${label}`}
+            aria-label={`${m?.character[characterId]?.nameTh} ${label}`}
             aria-pressed={order > 0}
-            disabled={!sk}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation()
-              if (sk) onToggle(sk.id)
+              onToggle({ characterId, slot: pos })
             }}
           >
             {order || ''}
@@ -59,7 +57,7 @@ export function SlotCharacter({ characterId, small }: { characterId: string; sma
   return (
     <>
       <ImageSlot item={c} size={small ? 32 : 40} showTitle={false} />
-      <span className="slot-name">{c?.name}</span>
+      <span className="slot-name">{c?.nameTh}</span>
     </>
   )
 }
@@ -69,7 +67,7 @@ interface Props {
   placements: Placement[]
   variant?: 'ally' | 'enemy'
   /** When given (ally builds), shows the upper/lower skill boxes beside each character. */
-  skillOrder?: string[]
+  skillOrder?: SkillRef[]
   size?: 'sm' | 'md'
 }
 

@@ -102,7 +102,7 @@ function CreateLineup() {
 
       {slot && m && (
         <Picker
-          title={current ? `เปลี่ยน ${m.character[current.characterId]?.name}` : 'เลือกตัวละคร'}
+          title={current ? `เปลี่ยน ${m.character[current.characterId]?.nameTh}` : 'เลือกตัวละคร'}
           items={m.characters}
           selected={current ? [current.characterId] : []}
           disabledIds={placements.length >= 3 && !current ? m.characters.map((c) => c.id) : placements.map((p) => p.characterId)}

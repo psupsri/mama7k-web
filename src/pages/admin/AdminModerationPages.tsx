@@ -39,7 +39,7 @@ export function AdminLineupsPage() {
   const [merging, setMerging] = useState<DefenseLineup | null>(null)
 
   if (isLoading || !m) return <Loading />
-  const name = (l: DefenseLineup) => l.placements.map((p) => m.character[p.characterId]?.name).join(' · ')
+  const name = (l: DefenseLineup) => l.placements.map((p) => m.character[p.characterId]?.nameTh).join(' · ')
 
   return (
     <div className="stack">

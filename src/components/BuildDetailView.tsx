@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import * as buildsApi from '../api/builds'
 import { useBuild, useMaster, useMe } from '../hooks/queries'
-import { formationInfo, orderedPlacements, teamTitle } from '../lib/formation'
+import { formationInfo, orderedPlacements, SKILL_LABEL, teamTitle } from '../lib/formation'
 import { formatDate } from '../lib/labels'
 import { Formation } from './Formation'
 import { Icon } from './Icon'
@@ -38,7 +38,7 @@ export function BuildDetailView({ buildId, backTo, showEnemy }: { buildId: strin
   if (error || !d) return <ErrorState error={error} backTo={backTo} />
 
   const b = d.build
-  const ordersFor = (cid: string) => b.skillOrder.flatMap((sid, i) => (m.skill[sid]?.characterId === cid ? [i + 1] : []))
+  const ordersFor = (cid: string) => b.skillOrder.flatMap((s, i) => (s.characterId === cid ? [i + 1] : []))
   const recs = orderedPlacements(b.placements).flatMap((p) => b.recommendations.filter((r) => r.characterId === p.characterId))
 
   return (
@@ -97,19 +97,16 @@ export function BuildDetailView({ buildId, backTo, showEnemy }: { buildId: strin
               <span className="muted">ไม่ได้ระบุ</span>
             ) : (
               <ol className="stack" style={{ gap: 4, margin: 0, padding: 0, listStyle: 'none' }}>
-                {b.skillOrder.map((sid, i) => {
-                  const sk = m.skill[sid]
-                  return (
-                    <li key={sid} className="row" style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--surface-2)' }}>
-                      <span className="num" style={{ color: 'var(--gold-text)' }}>
-                        {i + 1}
-                      </span>
-                      <ImageSlot item={sk} size={28} />
-                      <span>{sk && m.character[sk.characterId]?.name}</span>
-                      <span className="small muted">{sk?.name}</span>
-                    </li>
-                  )
-                })}
+                {b.skillOrder.map((s, i) => (
+                  <li key={i} className="row" style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--surface-2)' }}>
+                    <span className="num" style={{ color: 'var(--gold-text)' }}>
+                      {i + 1}
+                    </span>
+                    <ImageSlot item={m.character[s.characterId]} size={28} />
+                    <span>{m.character[s.characterId]?.nameTh}</span>
+                    <span className="small muted">{SKILL_LABEL[s.slot]}</span>
+                  </li>
+                ))}
               </ol>
             )}
           </Section>

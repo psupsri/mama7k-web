@@ -28,7 +28,6 @@ type ById<T> = Record<string, T>
 
 export interface MasterLookup extends MasterData {
   character: ById<MasterData['characters'][number]>
-  skill: ById<MasterData['skills'][number]>
   pet: ById<MasterData['pets'][number]>
   set: ById<MasterData['sets'][number]>
   ring: ById<MasterData['rings'][number]>
@@ -46,7 +45,6 @@ export function useMaster(): MasterLookup | undefined {
       data && {
         ...data,
         character: index(data.characters),
-        skill: index(data.skills),
         pet: index(data.pets),
         set: index(data.sets),
         ring: index(data.rings),
