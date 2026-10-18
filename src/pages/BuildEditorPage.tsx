@@ -10,6 +10,7 @@ import type {
   RingOption,
   Row,
   SkillRef,
+  SpeedRule,
   Star,
   Visibility,
 } from '../types/domain'
@@ -17,6 +18,7 @@ import { useBuild, useLineup, useMaster, useMyGroups, type MasterLookup } from '
 import { FORMATIONS, fitPlacements, SKILL_LABEL } from '../lib/formation'
 import { VISIBILITY_HINT, VISIBILITY_LABEL } from '../lib/labels'
 import { EnemyLineupCard } from '../components/EnemyLineupCard'
+import { SPEED_LABEL } from '../components/game'
 import { FormationEditor } from '../components/FormationEditor'
 import { Icon } from '../components/Icon'
 import { ImageSlot } from '../components/ImageSlot'
@@ -118,6 +120,8 @@ function BuildEditor({
   const [submitted, setSubmitted] = useState(false)
 
   const set = <K extends keyof BuildInput>(k: K, v: BuildInput[K]) => setF((x) => ({ ...x, [k]: v }))
+  // An empty rule is kept as an object while editing; the API stores it as null.
+  const setSpeed = (patch: NonNullable<SpeedRule>) => setF((x) => ({ ...x, speed: { ...x.speed, ...patch } }))
 
   const save = useMutation({
     mutationFn: () => (buildId ? buildsApi.updateBuild(buildId, f) : buildsApi.createBuild(f)),
@@ -250,27 +254,20 @@ function BuildEditor({
         <div className="stack" style={{ gap: 6 }}>
           <span className="sublabel">เงื่อนไข Speed</span>
           <div className="row wrap">
-            <button type="button" className="chip" aria-pressed={!f.speed} onClick={() => set('speed', null)}>
-              ไม่ระบุ
-            </button>
-            <button type="button" className="chip" aria-pressed={f.speed?.kind === 'FASTER'} onClick={() => set('speed', { kind: 'FASTER' })}>
-              เร็วกว่าฝั่งตรงข้าม
-            </button>
-            <button type="button" className="chip" aria-pressed={f.speed?.kind === 'MIN'} onClick={() => set('speed', { kind: 'MIN', value: f.speed?.kind === 'MIN' ? f.speed.value : 100 })}>
-              อย่างน้อย…
-            </button>
-            {f.speed?.kind === 'MIN' && (
-              <input
-                className="input input-sm"
-                style={{ width: 110 }}
-                type="number"
-                min={1}
-                aria-label="Speed ขั้นต่ำ"
-                value={f.speed.value}
-                onChange={(e) => set('speed', { kind: 'MIN', value: Number(e.target.value) })}
-              />
-            )}
+            {([undefined, 'FASTER', 'SLOWER'] as const).map((kind) => (
+              <button key={kind ?? 'any'} type="button" className="chip" aria-pressed={f.speed?.kind === kind} onClick={() => setSpeed({ kind })}>
+                {kind ? SPEED_LABEL[kind] : 'ไม่ระบุ'}
+              </button>
+            ))}
           </div>
+          <input
+            className="input input-sm"
+            maxLength={200}
+            placeholder="หมายเหตุ เช่น สปีด 150 ขึ้นไป (ไม่บังคับ)"
+            aria-label="หมายเหตุ Speed"
+            value={f.speed?.note ?? ''}
+            onChange={(e) => setSpeed({ note: e.target.value })}
+          />
         </div>
       </EditorSection>
 
@@ -562,7 +559,7 @@ function RecEditor({
                 </button>
               </div>
               <div className="row">
-                <ImageSlot item={m.ring[r.ringId]} size={32} round />
+                <ImageSlot key={r.ringId} item={m.ring[r.ringId]} size={32} round />
                 <select className="select input-sm grow" aria-label="แหวนหลัก" value={r.ringId} onChange={(e) => updateRing(i, { ringId: e.target.value })}>
                   {activeRings.map((x) => (
                     <option key={x.id} value={x.id}>
@@ -579,9 +576,13 @@ function RecEditor({
                 </select>
               </div>
               <div className="row">
-                <span className="small muted" style={{ width: 32, textAlign: 'center' }}>
-                  ซ้อน
-                </span>
+                {r.stack ? (
+                  <ImageSlot key={r.stack.ringId} item={m.ring[r.stack.ringId]} size={32} round />
+                ) : (
+                  <span className="small muted" style={{ width: 32, textAlign: 'center' }}>
+                    ซ้อน
+                  </span>
+                )}
                 <select
                   className="select input-sm grow"
                   aria-label="แหวนซ้อน"

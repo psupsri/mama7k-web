@@ -161,12 +161,17 @@ export function CounterPets({ ids }: { ids: string[] }) {
   )
 }
 
+export const SPEED_LABEL = { FASTER: 'เร็วกว่าฝั่งตรงข้าม', SLOWER: 'ช้ากว่าฝั่งตรงข้าม' } as const
+
 export function SpeedText({ speed }: { speed: SpeedRule }) {
-  if (!speed) return null
+  if (!speed || (!speed.kind && !speed.note)) return null
   return (
-    <span className="row small" style={{ gap: 4, color: 'var(--gold-text)' }}>
+    <span className="row small" style={{ gap: 4, color: 'var(--gold-text)', alignItems: 'flex-start' }}>
       <Icon name="bolt" size={14} />
-      {speed.kind === 'FASTER' ? 'เร็วกว่าฝั่งตรงข้าม' : `Speed อย่างน้อย ${speed.value}`}
+      <span>
+        {speed.kind ? SPEED_LABEL[speed.kind] : 'Speed'}
+        {speed.note && <span className="muted"> · {speed.note}</span>}
+      </span>
     </span>
   )
 }

@@ -108,7 +108,8 @@ export interface CharacterRecommendation {
   note: string
 }
 
-export type SpeedRule = { kind: 'FASTER' } | { kind: 'MIN'; value: number } | null
+/** Speed compared with the enemy (kind omitted = not specified) plus a free-text note. */
+export type SpeedRule = { kind?: 'FASTER' | 'SLOWER'; note?: string } | null
 
 export interface BuildShare {
   groupId: ID
