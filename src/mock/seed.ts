@@ -34,7 +34,7 @@ export interface MockDB {
   seq: number
 }
 
-export const DB_VERSION = 4
+export const DB_VERSION = 5
 
 const item = (prefix: string, code: string, name: string, aliases: string[] = []) => ({
   id: `${prefix}_${code}`,
@@ -458,6 +458,40 @@ export function createSeed(now = Date.now()): MockDB {
     },
   ]
 
+  // Many public builds on l3 so the list has several pages to browse.
+  const pool = ['yungon', 'skull', 'doyoung', 'rudy', 'karma', 'hellenia', 'shane', 'pascal', 'fai', 'bidam', 'biscuit', 'teo', 'hayeon', 'soran']
+  const setPool = ['set_crit', 'set_attack', 'set_hit', 'set_def', 'set_boss', 'set_resist']
+  for (let n = 0; n < 26; n++) {
+    const team = [0, 1, 2].map((k) => `char_${pool[(n * 3 + k * 5) % pool.length]}`)
+    builds.push({
+      ...base,
+      id: `bx${n + 1}`,
+      lineupId: 'l3',
+      description: `ตัวอย่าง Build ที่ ${n + 1} สำหรับทดลองแบ่งหน้า`,
+      creatorId: ['u2', 'u3', 'u4'][n % 3],
+      visibility: 'PUBLIC',
+      shares: [],
+      counterPets: n % 4 === 0 ? ['pet_taeo'] : [],
+      formation: 'F3B2',
+      placements: [
+        { characterId: team[0], row: 'FRONT', slot: 0 },
+        { characterId: team[1], row: 'FRONT', slot: 2 },
+        { characterId: team[2], row: 'BACK', slot: 1 },
+      ],
+      ownPets: [['pet_taeo', 'pet_yu', 'pet_ari'][n % 3]],
+      skillOrder: [],
+      createdAt: iso(29 - n),
+      recommendations: team.map((characterId, k) => ({
+        characterId,
+        sets: [setPool[(n + k) % setPool.length]],
+        stats: [{ statId: 'stat_crit', value: 100 }],
+        rings: [],
+        ringStackRequired: false,
+        note: '',
+      })),
+    })
+  }
+
   // Deterministic pseudo-random votes so stats look realistic.
   let s = 7
   const rand = () => {
@@ -468,6 +502,10 @@ export function createSeed(now = Date.now()): MockDB {
   const levels: EquipLevel[] = ['EXACT_EQUIPMENT', 'SAME_SET_DIFFERENT_SUBSTATS', 'CHARACTERS_ONLY']
   const winRate: Record<string, number> = { b1: 0.78, b2: 0.55, b3: 0.66, b5: 0.6, b6: 0.4, b7: 0.7, b8: 0.3 }
   const counts: Record<string, number> = { b1: 34, b2: 12, b3: 9, b5: 18, b6: 6, b7: 10, b8: 5 }
+  for (let n = 1; n <= 26; n++) {
+    counts[`bx${n}`] = (n * 7) % 13
+    winRate[`bx${n}`] = 0.3 + ((n * 37) % 60) / 100
+  }
   const votes: Vote[] = []
   for (const buildId of Object.keys(counts)) {
     for (let i = 0; i < counts[buildId]; i++) {

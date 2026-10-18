@@ -1286,3 +1286,14 @@ button.skill-box:hover:not(:disabled) {
     max-width: 420px;
   }
 }
+
+/* ---------- Lineup list mode ---------- */
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+

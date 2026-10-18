@@ -11,7 +11,8 @@ import * as votes from './votes'
 import type { BuildInput } from './builds'
 
 const as = (userId: string | null) => auth.devSwitchUser(userId)
-const ids = (list: { build: { id: string } }[]) => list.map((s) => s.build.id).sort()
+const ids = (list: { build: { id: string } }[] | { items: { build: { id: string } }[] }) =>
+  ('items' in list ? list.items : list).map((s) => s.build.id).sort()
 
 function inputFrom(id: string, patch: Partial<BuildInput> = {}): BuildInput {
   const b = db.builds.find((x) => x.id === id)!
@@ -88,6 +89,20 @@ describe('FR 3.2 duplicate lineups', () => {
       { characterId: 'char_hayeon', row: 'BACK', slot: 0 },
     ])
     expect(r.existed).toBe(false)
+  })
+})
+
+describe('Build list paging', () => {
+  it('pages the sorted list and reports the total and every countered pet', async () => {
+    await as('u1')
+    const p1 = await builds.listBuildsForLineup('l1', { page: 1, pageSize: 2 })
+    const p3 = await builds.listBuildsForLineup('l1', { page: 3, pageSize: 2 })
+    expect(p1.total).toBe(5)
+    expect(p1.items).toHaveLength(2)
+    expect(p3.items).toHaveLength(1)
+    expect(p1.counterPets).toEqual(['pet_ari', 'pet_pet4', 'pet_taeo', 'pet_yu'])
+    const all = await builds.listBuildsForLineup('l1', { pageSize: 50 })
+    expect(all.items.slice(0, 2).map((s) => s.build.id)).toEqual(p1.items.map((s) => s.build.id))
   })
 })
 

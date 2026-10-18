@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import * as authApi from '../api/auth'
 import * as buildsApi from '../api/builds'
 import * as groupsApi from '../api/groups'
@@ -65,7 +65,8 @@ export function useLineup(id: string | undefined) {
 }
 
 export function useLineupBuilds(id: string, q: BuildListQuery) {
-  return useQuery({ queryKey: qk.lineupBuilds(id, q), queryFn: () => buildsApi.listBuildsForLineup(id, q) })
+  // Keep the current page on screen while the next one loads.
+  return useQuery({ queryKey: qk.lineupBuilds(id, q), queryFn: () => buildsApi.listBuildsForLineup(id, q), placeholderData: keepPreviousData })
 }
 
 export function useBuild(id: string | undefined) {

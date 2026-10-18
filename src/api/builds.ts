@@ -1,6 +1,7 @@
 import { db, nextId } from '../mock/db'
 import type {
   BuildDetail,
+  BuildListPage,
   BuildSummary,
   CharacterRecommendation,
   FormationType,
@@ -29,7 +30,12 @@ export type BuildSort = 'WIN14' | 'VOTES' | 'NEWEST'
 export interface BuildListQuery {
   enemyPetId?: string | null
   sort?: BuildSort
+  page?: number // 1-based
+  pageSize?: number
 }
+
+export const DEFAULT_PAGE_SIZE = 9 // 3 rows of 3 cards: one screen on a laptop
+const MAX_PAGE_SIZE = 50
 
 function sortSummaries(list: BuildSummary[], sort: BuildSort) {
   const pct = (s: BuildSummary) => s.stats14.overallWinPct ?? -1
@@ -41,14 +47,24 @@ function sortSummaries(list: BuildSummary[], sort: BuildSort) {
 }
 
 export function listBuildsForLineup(lineupId: string, q: BuildListQuery = {}) {
-  return respond<BuildSummary[]>(() => {
+  return respond<BuildListPage>(() => {
     const u = viewer()
-    const list = db.builds
-      .filter((b) => b.lineupId === lineupId && canView(u, b))
+    const visible = db.builds.filter((b) => b.lineupId === lineupId && canView(u, b))
+    const counterPets = [...new Set(visible.flatMap((b) => b.counterPets))].sort()
+    const list = visible
       // A build with no counter pets works against any enemy pet (FR 4.2).
       .filter((b) => !q.enemyPetId || b.counterPets.length === 0 || b.counterPets.includes(q.enemyPetId))
       .map((b) => toSummary(u, b))
-    return sortSummaries(list, q.sort ?? 'WIN14')
+    sortSummaries(list, q.sort ?? 'WIN14')
+    const pageSize = Math.min(Math.max(1, q.pageSize ?? DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE)
+    const page = Math.max(1, q.page ?? 1)
+    return {
+      items: list.slice((page - 1) * pageSize, page * pageSize),
+      total: list.length,
+      page,
+      pageSize,
+      counterPets,
+    }
   })
 }
 

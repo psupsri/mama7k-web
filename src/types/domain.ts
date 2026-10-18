@@ -194,6 +194,18 @@ export interface BuildSummary {
   isMine: boolean
 }
 
+export interface Page<T> {
+  items: T[]
+  total: number
+  page: number // 1-based
+  pageSize: number
+}
+
+export interface BuildListPage extends Page<BuildSummary> {
+  /** Enemy pets countered by any build the viewer can see here (for the filter chips). */
+  counterPets: ID[]
+}
+
 export interface BuildDetail extends BuildSummary {
   lineup: DefenseLineup
   statsAll: BuildStats
