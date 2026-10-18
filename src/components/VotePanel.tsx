@@ -57,9 +57,6 @@ export function VotePanel({ detail, me, compact }: { detail: BuildDetail; me: Us
       </div>
     )
   }
-  if (!me.emailVerified) {
-    return <div className="banner">ยืนยันอีเมลก่อนจึงจะโหวตได้ (ดูที่หน้าโปรไฟล์)</div>
-  }
 
   const submit = () => {
     if (!draft?.level) return

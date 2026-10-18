@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { useMaster } from '../hooks/queries'
 import type { RingOption, SpeedRule, StatTarget, Visibility } from '../types/domain'
-import { VISIBILITY_LABEL } from '../lib/labels'
+import { SPEED_LABEL, VISIBILITY_LABEL } from '../lib/labels'
 import { Icon } from './Icon'
 import { ImageSlot } from './ImageSlot'
 
@@ -160,8 +160,6 @@ export function CounterPets({ ids }: { ids: string[] }) {
     </div>
   )
 }
-
-export const SPEED_LABEL = { FASTER: 'เร็วกว่าฝั่งตรงข้าม', SLOWER: 'ช้ากว่าฝั่งตรงข้าม' } as const
 
 export function SpeedText({ speed }: { speed: SpeedRule }) {
   if (!speed || (!speed.kind && !speed.note)) return null

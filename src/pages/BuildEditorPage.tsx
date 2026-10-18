@@ -16,9 +16,8 @@ import type {
 } from '../types/domain'
 import { useBuild, useLineup, useMaster, useMyGroups, type MasterLookup } from '../hooks/queries'
 import { FORMATIONS, fitPlacements, SKILL_LABEL } from '../lib/formation'
-import { VISIBILITY_HINT, VISIBILITY_LABEL } from '../lib/labels'
+import { SPEED_LABEL, VISIBILITY_HINT, VISIBILITY_LABEL } from '../lib/labels'
 import { EnemyLineupCard } from '../components/EnemyLineupCard'
-import { SPEED_LABEL } from '../components/game'
 import { FormationEditor } from '../components/FormationEditor'
 import { Icon } from '../components/Icon'
 import { ImageSlot } from '../components/ImageSlot'
@@ -41,7 +40,7 @@ const emptyRec = (characterId: string): CharacterRecommendation => ({
 
 export function BuildEditorPage() {
   return (
-    <RequireAuth verified>
+    <RequireAuth>
       <BuildEditorLoader />
     </RequireAuth>
   )

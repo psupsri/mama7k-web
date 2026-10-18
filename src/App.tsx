@@ -8,7 +8,7 @@ import { MyBuildsPage } from './pages/MyBuildsPage'
 import { GroupsPage } from './pages/GroupsPage'
 import { GroupDetailPage } from './pages/GroupDetailPage'
 import { JoinPage } from './pages/JoinPage'
-import { LoginPage, NotFoundPage, ProfilePage, RegisterPage, ResetPasswordPage, VerifyEmailPage } from './pages/AuthPages'
+import { LoginPage, NotFoundPage, ProfilePage, RegisterPage } from './pages/AuthPages'
 import { AdminLayout } from './pages/admin/AdminLayout'
 import { AdminMasterPage } from './pages/admin/AdminMasterPage'
 import { AdminImportPage } from './pages/admin/AdminImportPage'
@@ -35,9 +35,7 @@ const router = createBrowserRouter([
       { path: '/join/:code', element: <JoinPage /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
-      { path: '/reset-password', element: <ResetPasswordPage /> },
       { path: '/profile', element: <ProfilePage /> },
-      { path: '/verify-email', element: <VerifyEmailPage /> },
       {
         path: '/admin',
         element: <AdminLayout />,

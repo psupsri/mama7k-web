@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import * as authApi from '../api/auth'
 import { useMe } from '../hooks/queries'
 import { useToast } from '../hooks/useToast'
@@ -30,10 +30,10 @@ function useAfterAuth() {
 }
 
 export function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const done = useAfterAuth()
-  const login = useMutation({ mutationFn: () => authApi.login(email, password), onSuccess: done })
+  const login = useMutation({ mutationFn: () => authApi.login(username, password), onSuccess: done })
   const submit = (e: FormEvent) => {
     e.preventDefault()
     login.mutate()
@@ -49,8 +49,16 @@ export function LoginPage() {
     >
       <form className="stack" onSubmit={submit}>
         <label className="field">
-          <span>อีเมล</span>
-          <input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <span>ชื่อผู้ใช้</span>
+          <input
+            className="input"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
         </label>
         <label className="field">
           <span>รหัสผ่าน</span>
@@ -60,21 +68,21 @@ export function LoginPage() {
         <button className="btn btn-primary" disabled={login.isPending}>
           เข้าสู่ระบบ
         </button>
-        <Link to="/reset-password" className="small" style={{ alignSelf: 'center' }}>
-          ลืมรหัสผ่าน?
-        </Link>
+        <p className="small muted" style={{ textAlign: 'center', margin: 0 }}>
+          ลืมรหัสผ่าน? ติดต่อทีมงานเพื่อขอรหัสผ่านชั่วคราว
+        </p>
       </form>
-      {import.meta.env.DEV && <p className="faint small">Dev: ผู้ใช้ตัวอย่าง เช่น pisit@example.com รหัสผ่าน password123 หรือใช้ปุ่ม Dev ด้านล่างซ้าย</p>}
+      {import.meta.env.DEV && <p className="faint small">Dev: ผู้ใช้ตัวอย่าง เช่น pisit รหัสผ่าน password123 หรือใช้ปุ่ม Dev ด้านล่างซ้าย</p>}
     </AuthCard>
   )
 }
 
 export function RegisterPage() {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const done = useAfterAuth()
-  const reg = useMutation({ mutationFn: () => authApi.register(email, password, name), onSuccess: done })
+  const reg = useMutation({ mutationFn: () => authApi.register(username, password, name), onSuccess: done })
   return (
     <AuthCard
       title="สมัครสมาชิก"
@@ -92,110 +100,33 @@ export function RegisterPage() {
         }}
       >
         <label className="field">
-          <span>อีเมล</span>
-          <input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <span>ชื่อผู้ใช้ (ใช้เข้าสู่ระบบ · a-z, 0-9, _ ยาว 3–20 ตัว)</span>
+          <input
+            className="input"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            pattern="[A-Za-z0-9_]{3,20}"
+            title="a-z, 0-9 และ _ ยาว 3–20 ตัว"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
         </label>
         <label className="field">
-          <span>Display Name</span>
-          <input className="input" required value={name} onChange={(e) => setName(e.target.value)} />
+          <span>ชื่อที่แสดง (ภาษาไทยได้ · เปลี่ยนภายหลังได้)</span>
+          <input className="input" required maxLength={50} value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="field">
           <span>รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)</span>
           <input className="input" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
+        <p className="small muted" style={{ margin: 0 }}>เราไม่เก็บอีเมล ถ้าลืมรหัสผ่านต้องติดต่อทีมงาน จึงควรจดรหัสผ่านไว้ให้ดี</p>
         {reg.error && <p className="error-text">{errorMessage(reg.error)}</p>}
         <button className="btn btn-primary" disabled={reg.isPending}>
           สมัครสมาชิก
         </button>
       </form>
-    </AuthCard>
-  )
-}
-
-/** /reset-password asks for an email; /reset-password?token=… (from the email) sets a new password. */
-export function ResetPasswordPage() {
-  const [params] = useSearchParams()
-  const token = params.get('token')
-  return token ? <ConfirmReset token={token} /> : <RequestReset />
-}
-
-function RequestReset() {
-  const [email, setEmail] = useState('')
-  const reset = useMutation({ mutationFn: () => authApi.requestPasswordReset(email) })
-  return (
-    <AuthCard title="ลืมรหัสผ่าน" footer={<Link to="/login">กลับไปเข้าสู่ระบบ</Link>}>
-      {reset.isSuccess ? (
-        <p>ถ้ามีบัญชีที่ใช้อีเมลนี้ เราได้ส่งลิงก์ตั้งรหัสผ่านใหม่ไปแล้ว ลิงก์ใช้ได้ 1 ชั่วโมง</p>
-      ) : (
-        <form
-          className="stack"
-          onSubmit={(e) => {
-            e.preventDefault()
-            reset.mutate()
-          }}
-        >
-          <label className="field">
-            <span>อีเมล</span>
-            <input className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
-          <button className="btn btn-primary" disabled={reset.isPending}>
-            ส่งลิงก์ตั้งรหัสผ่านใหม่
-          </button>
-        </form>
-      )}
-    </AuthCard>
-  )
-}
-
-function ConfirmReset({ token }: { token: string }) {
-  const [password, setPassword] = useState('')
-  const confirm = useMutation({ mutationFn: () => authApi.confirmPasswordReset(token, password) })
-  return (
-    <AuthCard title="ตั้งรหัสผ่านใหม่" footer={<Link to="/login">กลับไปเข้าสู่ระบบ</Link>}>
-      {confirm.isSuccess ? (
-        <p>
-          ตั้งรหัสผ่านใหม่แล้ว ทุกเครื่องที่เคยเข้าสู่ระบบถูกออกจากระบบ <Link to="/login">เข้าสู่ระบบอีกครั้ง</Link>
-        </p>
-      ) : (
-        <form
-          className="stack"
-          onSubmit={(e) => {
-            e.preventDefault()
-            confirm.mutate()
-          }}
-        >
-          <label className="field">
-            <span>รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</span>
-            <input className="input" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
-          </label>
-          {confirm.error && <p className="error-text">{errorMessage(confirm.error)}</p>}
-          <button className="btn btn-primary" disabled={confirm.isPending}>
-            บันทึกรหัสผ่านใหม่
-          </button>
-        </form>
-      )}
-    </AuthCard>
-  )
-}
-
-/** Landing page for the verification email link: /verify-email?token=… */
-export function VerifyEmailPage() {
-  const [params] = useSearchParams()
-  const qc = useQueryClient()
-  const token = params.get('token') ?? ''
-  const verify = useQuery({ queryKey: ['verifyEmail', token], queryFn: () => authApi.verifyEmail(token).then(() => true), enabled: !!token })
-  useEffect(() => {
-    if (verify.isSuccess) qc.invalidateQueries({ queryKey: ['me'] })
-  }, [verify.isSuccess, qc])
-  return (
-    <AuthCard title="ยืนยันอีเมล" footer={<Link to="/">ไปหน้าแรก</Link>}>
-      {!token || verify.isError ? (
-        <p className="error-text">{verify.error ? errorMessage(verify.error) : 'ลิงก์ไม่ถูกต้อง'}</p>
-      ) : verify.isSuccess ? (
-        <p>ยืนยันอีเมลแล้ว ตอนนี้สร้าง Build และโหวตได้</p>
-      ) : (
-        <p className="muted">กำลังยืนยัน…</p>
-      )}
     </AuthCard>
   )
 }
@@ -224,11 +155,6 @@ function Profile() {
     },
     onError: (e) => toast(errorMessage(e), true),
   })
-  const resend = useMutation({
-    mutationFn: authApi.resendVerification,
-    onSuccess: () => toast('ส่งลิงก์ยืนยันไปที่อีเมลแล้ว'),
-    onError: (e) => toast(errorMessage(e), true),
-  })
   const del = useMutation({
     mutationFn: authApi.deleteAccount,
     onSuccess: () => {
@@ -242,14 +168,7 @@ function Profile() {
   return (
     <div className="page" style={{ maxWidth: 560 }}>
       <h1>โปรไฟล์</h1>
-      {!me.emailVerified && (
-        <div className="banner row wrap between">
-          <span>ยังไม่ได้ยืนยันอีเมล จึงยังสร้าง Build หรือโหวตไม่ได้</span>
-          <button className="btn btn-sm btn-primary" disabled={resend.isPending} onClick={() => resend.mutate()}>
-            ส่งลิงก์ยืนยันอีกครั้ง
-          </button>
-        </div>
-      )}
+      {me.mustChangePassword && <div className="banner">ทีมงานรีเซ็ตรหัสผ่านให้แล้ว กรุณาตั้งรหัสผ่านใหม่ของคุณก่อนใช้งานต่อ</div>}
       <form
         className="card stack"
         onSubmit={(e) => {
@@ -258,17 +177,19 @@ function Profile() {
         }}
       >
         <label className="field">
-          <span>อีเมล</span>
-          <input className="input" value={me.email} disabled />
+          <span>ชื่อผู้ใช้</span>
+          <input className="input" value={me.username} disabled />
         </label>
         <label className="field">
-          <span>Display Name</span>
+          <span>ชื่อที่แสดง</span>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }} disabled={save.isPending || name === me.displayName}>
           บันทึก
         </button>
       </form>
+
+      <ChangePassword forced={me.mustChangePassword} />
 
       <section className="card stack" style={{ borderColor: 'var(--loss-border)' }}>
         <h2 style={{ fontSize: 17, color: 'var(--danger)' }}>ลบบัญชี</h2>
@@ -287,6 +208,54 @@ function Profile() {
         </button>
       </section>
     </div>
+  )
+}
+
+function ChangePassword({ forced }: { forced: boolean }) {
+  const qc = useQueryClient()
+  const toast = useToast()
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [again, setAgain] = useState('')
+  const change = useMutation({
+    mutationFn: () => authApi.changePassword(current, next),
+    onSuccess: (u) => {
+      qc.setQueryData(['me'], u)
+      setCurrent('')
+      setNext('')
+      setAgain('')
+      toast('เปลี่ยนรหัสผ่านแล้ว เครื่องอื่นที่เคยเข้าสู่ระบบถูกออกจากระบบ')
+    },
+  })
+  const mismatch = again !== '' && again !== next
+  return (
+    <form
+      className="card stack"
+      style={forced ? { borderColor: 'var(--gold)' } : undefined}
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (!mismatch) change.mutate()
+      }}
+    >
+      <h2 style={{ fontSize: 17 }}>เปลี่ยนรหัสผ่าน</h2>
+      <label className="field">
+        <span>{forced ? 'รหัสผ่านชั่วคราวที่ได้จากทีมงาน' : 'รหัสผ่านปัจจุบัน'}</span>
+        <input className="input" type="password" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} />
+      </label>
+      <label className="field">
+        <span>รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</span>
+        <input className="input" type="password" autoComplete="new-password" required minLength={8} maxLength={72} value={next} onChange={(e) => setNext(e.target.value)} />
+      </label>
+      <label className="field">
+        <span>ยืนยันรหัสผ่านใหม่</span>
+        <input className="input" type="password" autoComplete="new-password" required value={again} onChange={(e) => setAgain(e.target.value)} />
+      </label>
+      {mismatch && <p className="error-text">รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน</p>}
+      {change.error && <p className="error-text">{errorMessage(change.error)}</p>}
+      <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }} disabled={change.isPending || mismatch}>
+        เปลี่ยนรหัสผ่าน
+      </button>
+    </form>
   )
 }
 

@@ -35,3 +35,5 @@ export function formatPct(v: number | null) {
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
 }
+
+export const SPEED_LABEL = { FASTER: 'เร็วกว่าฝั่งตรงข้าม', SLOWER: 'ช้ากว่าฝั่งตรงข้าม' } as const

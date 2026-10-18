@@ -56,12 +56,13 @@ export type UserRole = 'USER' | 'MODERATOR' | 'SUPER_ADMIN'
 
 export interface User {
   id: ID
-  email: string
+  username: string
   displayName: string
   role: UserRole
   suspended: boolean
   deleted: boolean
-  emailVerified: boolean
+  /** Set after a Super Admin resets the password; the web asks for a new one first. */
+  mustChangePassword: boolean
 }
 
 export interface Group {

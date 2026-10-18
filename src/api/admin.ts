@@ -6,6 +6,9 @@ import { http } from './client'
 export const adminListUsers = (q = '') => http.get<User[]>('/admin/users', { q })
 export const adminSetSuspended = (userId: string, suspended: boolean) => http.patch<User>(`/admin/users/${userId}`, { suspended })
 export const adminSetRole = (userId: string, role: UserRole) => http.patch<User>(`/admin/users/${userId}`, { role })
+/** Super Admin only. Returns a temporary password to hand to the user; their sessions end. */
+export const adminResetPassword = (userId: string) =>
+  http.post<{ temporaryPassword: string }>(`/admin/users/${userId}/reset-password`)
 
 // ---------- public builds (staff never see group or private builds) ----------
 

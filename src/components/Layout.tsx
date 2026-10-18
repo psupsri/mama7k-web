@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import * as authApi from '../api/auth'
 import { errorMessage } from '../lib/errors'
@@ -13,6 +13,7 @@ export function Layout() {
   const { data: me } = useMe()
   const qc = useQueryClient()
   const nav = useNavigate()
+  const { pathname } = useLocation()
   const logout = useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
@@ -65,7 +66,8 @@ export function Layout() {
         </div>
       </header>
       <main id="main" className="container">
-        <Outlet />
+        {/* After a staff password reset the user must pick their own password first. */}
+        {me?.mustChangePassword && pathname !== '/profile' ? <Navigate to="/profile" replace /> : <Outlet />}
       </main>
       <DevLogin />
     </>
@@ -91,11 +93,11 @@ function ThemeToggle() {
 }
 
 const DEV_USERS = [
-  { email: 'pisit@example.com', name: 'Pisit', note: 'Super Admin · Owner กิลด์มาม่า · สมาชิก Night Raid' },
-  { email: 'mee@example.com', name: 'หมีน้อย', note: 'สมาชิกกิลด์มาม่า' },
-  { email: 'shadow@example.com', name: 'ShadowBlade', note: 'Moderator · Owner Night Raid' },
-  { email: 'fah@example.com', name: 'สายฟ้า', note: 'Owner ห้องลับสายฟ้า (นอก 2 Group แรก)' },
-  { email: 'banned@example.com', name: 'โดนแบน', note: 'ถูกระงับ: login ไม่ได้' },
+  { username: 'pisit', name: 'Pisit', note: 'Super Admin · Owner กิลด์มาม่า · สมาชิก Night Raid' },
+  { username: 'mee', name: 'หมีน้อย', note: 'สมาชิกกิลด์มาม่า' },
+  { username: 'shadow', name: 'ShadowBlade', note: 'Moderator · Owner Night Raid' },
+  { username: 'fah', name: 'สายฟ้า', note: 'Owner ห้องลับสายฟ้า (นอก 2 Group แรก)' },
+  { username: 'banned', name: 'โดนแบน', note: 'ถูกระงับ: login ไม่ได้' },
 ]
 
 /** Development-only quick login with the seeded users (password123). Not in production builds. */
@@ -106,13 +108,13 @@ function DevLogin() {
   const toast = useToast()
   if (!import.meta.env.DEV) return null
 
-  const switchTo = async (email: string | null) => {
+  const switchTo = async (username: string | null) => {
     try {
-      if (email) await authApi.login(email, 'password123')
+      if (username) await authApi.login(username, 'password123')
       else await authApi.logout()
       qc.clear()
       setOpen(false)
-      toast(email ? `เข้าสู่ระบบเป็น ${email}` : 'ออกจากระบบแล้ว (Guest)')
+      toast(username ? `เข้าสู่ระบบเป็น ${username}` : 'ออกจากระบบแล้ว (Guest)')
     } catch (e) {
       toast(errorMessage(e), true)
     }
@@ -133,9 +135,9 @@ function DevLogin() {
               Guest (ไม่ได้เข้าสู่ระบบ)
             </button>
             {DEV_USERS.map((u) => (
-              <button key={u.email} className="btn" style={{ justifyContent: 'space-between', textAlign: 'left' }} onClick={() => switchTo(u.email)}>
+              <button key={u.username} className="btn" style={{ justifyContent: 'space-between', textAlign: 'left' }} onClick={() => switchTo(u.username)}>
                 <span>
-                  {u.name} <span className="faint small">{u.email}</span>
+                  {u.name} <span className="faint small">@{u.username}</span>
                 </span>
                 <span className="small muted">{u.note}</span>
               </button>

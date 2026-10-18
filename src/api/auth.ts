@@ -4,23 +4,16 @@ import { http } from './client'
 /** The signed-in user, or null for guests. */
 export const me = () => http.get<User | null>('/me')
 
-export const login = (email: string, password: string) => http.post<User>('/auth/login', { email, password })
+export const login = (username: string, password: string) => http.post<User>('/auth/login', { username, password })
 
-export const register = (email: string, password: string, displayName: string) =>
-  http.post<User>('/auth/register', { email, password, displayName })
+export const register = (username: string, password: string, displayName: string) =>
+  http.post<User>('/auth/register', { username, password, displayName })
 
 export const logout = () => http.post<void>('/auth/logout')
 
-/** Confirms the token from the verification email link. */
-export const verifyEmail = (token: string) => http.post<void>('/auth/verify-email', { token })
-
-export const resendVerification = () => http.post<void>('/auth/resend-verification')
-
-/** Always succeeds so the response does not reveal whether the email exists. */
-export const requestPasswordReset = (email: string) => http.post<void>('/auth/password-reset', { email })
-
-export const confirmPasswordReset = (token: string, password: string) =>
-  http.post<void>('/auth/password-reset/confirm', { token, password })
+/** Signs out other devices; this one stays signed in. */
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  http.post<User>('/me/password', { currentPassword, newPassword })
 
 export const updateProfile = (displayName: string) => http.patch<User>('/me', { displayName })
 

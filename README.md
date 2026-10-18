@@ -22,15 +22,16 @@ npm run build
 
 In development a **Dev** button (bottom left) signs in as any seeded user, to check what each one can see:
 
-| User | Email | Role | Groups |
+| User | Username | Role | Groups |
 | --- | --- | --- | --- |
-| Pisit | pisit@example.com | SUPER_ADMIN | owner กิลด์มาม่า, member Night Raid |
-| หมีน้อย | mee@example.com | USER | member กิลด์มาม่า |
-| ShadowBlade | shadow@example.com | MODERATOR | owner Night Raid |
-| สายฟ้า | fah@example.com | USER | owner ห้องลับสายฟ้า |
-| โดนแบน | banned@example.com | USER (suspended) | — |
+| Pisit | pisit | SUPER_ADMIN | owner กิลด์มาม่า, member Night Raid |
+| หมีน้อย | mee | USER | member กิลด์มาม่า |
+| ShadowBlade | shadow | MODERATOR | owner Night Raid |
+| สายฟ้า | fah | USER | owner ห้องลับสายฟ้า |
+| โดนแบน | banned | USER (suspended) | — |
 
-Emails (verification, password reset) are written to the API log in development; open the link from there.
+In production the Go API serves the built app (`npm run build` → `dist/`) from the same origin; see the root
+`Dockerfile`.
 
 ## Structure
 

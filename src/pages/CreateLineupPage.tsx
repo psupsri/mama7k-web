@@ -22,7 +22,7 @@ function initialPlacements(ids: string[], formation: FormationType): Placement[]
 
 export function CreateLineupPage() {
   return (
-    <RequireAuth verified>
+    <RequireAuth>
       <CreateLineup />
     </RequireAuth>
   )

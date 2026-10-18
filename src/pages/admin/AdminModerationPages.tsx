@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import * as adminApi from '../../api/admin'
-import type { DefenseLineup, FormationType, Placement, Row, UserRole } from '../../types/domain'
+import type { DefenseLineup, FormationType, Placement, Row, User, UserRole } from '../../types/domain'
 import { useMaster, useMe } from '../../hooks/queries'
 import { useToast } from '../../hooks/useToast'
 import { errorMessage } from '../../lib/errors'
@@ -226,10 +226,41 @@ export function AdminUsersPage() {
   const [q, setQ] = useState('')
   const { data, isLoading } = useQuery({ queryKey: ['admin', 'users', q], queryFn: () => adminApi.adminListUsers(q) })
   const isSuper = me?.role === 'SUPER_ADMIN'
+  const toast = useToast()
+  const [tempPassword, setTempPassword] = useState<{ user: User; password: string } | null>(null)
 
   return (
     <div className="stack">
-      <input className="input" style={{ maxWidth: 320 }} placeholder="ค้นหาอีเมลหรือชื่อ" value={q} onChange={(e) => setQ(e.target.value)} aria-label="ค้นหา" />
+      {tempPassword && (
+        <Modal
+          title="รหัสผ่านชั่วคราว"
+          onClose={() => setTempPassword(null)}
+          footer={
+            <button className="btn btn-primary" onClick={() => setTempPassword(null)}>
+              ปิด
+            </button>
+          }
+        >
+          <div className="stack" style={{ gap: 10 }}>
+            <p>
+              ส่งรหัสนี้ให้ {tempPassword.user.displayName} (@{tempPassword.user.username}) ทางช่องทางส่วนตัว รหัสจะแสดงครั้งเดียว
+              และผู้ใช้ต้องตั้งรหัสผ่านใหม่หลังเข้าสู่ระบบ
+            </p>
+            <div className="row">
+              <code className="grow" style={{ fontSize: 18, padding: '8px 12px', background: 'var(--surface-2)', borderRadius: 8, userSelect: 'all' }}>
+                {tempPassword.password}
+              </code>
+              <button
+                className="btn btn-sm"
+                onClick={() => navigator.clipboard?.writeText(tempPassword.password).then(() => toast('คัดลอกแล้ว'))}
+              >
+                คัดลอก
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      <input className="input" style={{ maxWidth: 320 }} placeholder="ค้นหาชื่อผู้ใช้หรือชื่อที่แสดง" value={q} onChange={(e) => setQ(e.target.value)} aria-label="ค้นหา" />
       {isLoading ? (
         <Loading />
       ) : (
@@ -238,7 +269,7 @@ export function AdminUsersPage() {
             <thead>
               <tr>
                 <th>Display Name</th>
-                <th>อีเมล</th>
+                <th>ชื่อผู้ใช้</th>
                 <th>Role</th>
                 <th>สถานะ</th>
                 <th />
@@ -250,7 +281,7 @@ export function AdminUsersPage() {
                   <td>
                     {u.displayName} {u.id === me?.id && <span className="faint small">(คุณ)</span>}
                   </td>
-                  <td className="small muted">{u.email}</td>
+                  <td className="small muted">@{u.username}</td>
                   <td>
                     {isSuper && u.id !== me?.id ? (
                       <select
@@ -270,7 +301,22 @@ export function AdminUsersPage() {
                     )}
                   </td>
                   <td>{u.suspended ? <span className="badge badge-danger">ถูกระงับ</span> : <span className="badge badge-public">ปกติ</span>}</td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    {isSuper && u.id !== me?.id && (
+                      <button
+                        className="btn btn-sm"
+                        style={{ marginRight: 6 }}
+                        onClick={() =>
+                          confirm(`รีเซ็ตรหัสผ่านของ ${u.displayName} (@${u.username})? เครื่องที่ล็อกอินอยู่จะถูกออกจากระบบ`) &&
+                          adminApi
+                            .adminResetPassword(u.id)
+                            .then((r) => setTempPassword({ user: u, password: r.temporaryPassword }))
+                            .catch((e) => toast(errorMessage(e), true))
+                        }
+                      >
+                        รีเซ็ตรหัสผ่าน
+                      </button>
+                    )}
                     {u.id !== me?.id && (
                       <button
                         className={`btn btn-sm${u.suspended ? '' : ' btn-danger'}`}
