@@ -1,4 +1,4 @@
-import type { BattleResult, EquipLevel, Visibility } from '../types/domain'
+import type { BattleResult, EquipLevel, FeedbackKind, Visibility } from '../types/domain'
 
 export const EQUIP_LEVELS: EquipLevel[] = ['EXACT_EQUIPMENT', 'SAME_SET_DIFFERENT_SUBSTATS', 'CHARACTERS_ONLY']
 
@@ -37,3 +37,14 @@ export function formatDate(iso: string) {
 }
 
 export const SPEED_LABEL = { FASTER: 'เร็วกว่าฝั่งตรงข้าม', SLOWER: 'ช้ากว่าฝั่งตรงข้าม' } as const
+
+export const FEEDBACK_KIND_LABEL: Record<FeedbackKind, string> = {
+  BUG: 'แจ้งปัญหา',
+  IDEA: 'ข้อเสนอแนะ',
+  DATA: 'ข้อมูลเกมผิด',
+  OTHER: 'อื่นๆ',
+}
+
+export function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+}

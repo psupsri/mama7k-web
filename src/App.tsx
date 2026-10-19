@@ -12,6 +12,7 @@ import { LoginPage, NotFoundPage, ProfilePage, RegisterPage } from './pages/Auth
 import { AdminLayout } from './pages/admin/AdminLayout'
 import { AdminMasterPage } from './pages/admin/AdminMasterPage'
 import { AdminImportPage } from './pages/admin/AdminImportPage'
+import { AdminFeedbackPage } from './pages/admin/AdminFeedbackPage'
 import {
   AdminAuditPage,
   AdminBuildsPage,
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
           { path: 'lineups', element: <AdminLineupsPage /> },
           { path: 'builds', element: <AdminBuildsPage /> },
           { path: 'users', element: <AdminUsersPage /> },
+          { path: 'feedback', element: <AdminFeedbackPage /> },
           { path: 'audit', element: <AdminAuditPage /> },
         ],
       },

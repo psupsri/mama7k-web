@@ -7,6 +7,7 @@ import { useMe } from '../hooks/queries'
 import { applyTheme, getTheme, type Theme } from '../lib/theme'
 import { Icon } from './Icon'
 import { Modal } from './Modal'
+import { FeedbackDialog } from './FeedbackDialog'
 import { useToast } from '../hooks/useToast'
 
 export function Layout() {
@@ -14,6 +15,7 @@ export function Layout() {
   const qc = useQueryClient()
   const nav = useNavigate()
   const { pathname } = useLocation()
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const logout = useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
@@ -69,6 +71,13 @@ export function Layout() {
         {/* After a staff password reset the user must pick their own password first. */}
         {me?.mustChangePassword && pathname !== '/profile' ? <Navigate to="/profile" replace /> : <Outlet />}
       </main>
+      <footer className="container small muted" style={{ padding: '32px 16px 40px', textAlign: 'center' }}>
+        เจอปัญหาหรือมีไอเดีย?{' '}
+        <button type="button" className="btn btn-sm btn-ghost" onClick={() => setFeedbackOpen(true)}>
+          ส่งความคิดเห็น
+        </button>
+      </footer>
+      {feedbackOpen && <FeedbackDialog onClose={() => setFeedbackOpen(false)} />}
       <DevLogin />
     </>
   )

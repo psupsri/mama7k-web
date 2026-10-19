@@ -1,4 +1,4 @@
-import type { BuildSummary, DefenseLineup, FormationType, MasterData, MasterItem, Placement, User, UserRole } from '../types/domain'
+import type { BuildSummary, DefenseLineup, Feedback, FormationType, MasterData, MasterItem, Placement, User, UserRole } from '../types/domain'
 import { http } from './client'
 
 // ---------- users ----------
@@ -104,3 +104,10 @@ export function templateCsv(entity: MasterEntity, master: MasterData) {
 
 export const adminAuditLog = () =>
   http.get<{ id: string; actorId: string; actorName: string; action: string; target: string; at: string }[]>('/admin/audit')
+
+// ---------- feedback ----------
+
+export type FeedbackStatus = 'open' | 'done'
+export const adminListFeedback = (status: FeedbackStatus) => http.get<Feedback[]>('/admin/feedback', { status })
+export const adminResolveFeedback = (id: string, resolved: boolean) => http.patch<Feedback>(`/admin/feedback/${id}`, { resolved })
+export const adminDeleteFeedback = (id: string) => http.del(`/admin/feedback/${id}`)

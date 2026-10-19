@@ -213,3 +213,18 @@ export interface GroupDetail extends GroupSummary {
   members: { user: Pick<User, 'id' | 'displayName'>; joinedAt: string; isOwner: boolean }[]
   builds: { summary: BuildSummary; hidden: boolean }[]
 }
+
+// ---------- feedback ----------
+
+export type FeedbackKind = 'BUG' | 'IDEA' | 'DATA' | 'OTHER'
+
+export interface Feedback {
+  id: ID
+  kind: FeedbackKind
+  message: string
+  contact: string
+  page: string // path the sender was on
+  user: { id: ID; username: string; displayName: string } | null // null = guest
+  createdAt: string
+  resolvedAt: string | null
+}
