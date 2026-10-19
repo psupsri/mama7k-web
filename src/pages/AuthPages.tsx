@@ -100,15 +100,15 @@ export function RegisterPage() {
         }}
       >
         <label className="field">
-          <span>ชื่อผู้ใช้ (ใช้เข้าสู่ระบบ · a-z, 0-9, _ ยาว 3–20 ตัว)</span>
+          <span>ชื่อผู้ใช้ (ใช้เข้าสู่ระบบ · a-z, 0-9 และ . _ - @ ยาว 3–30 ตัว)</span>
           <input
             className="input"
             autoComplete="username"
             autoCapitalize="none"
             spellCheck={false}
             required
-            pattern="[A-Za-z0-9_]{3,20}"
-            title="a-z, 0-9 และ _ ยาว 3–20 ตัว"
+            pattern="[A-Za-z0-9._@\-]{3,30}"
+            title="a-z, 0-9 และ . _ - @ ยาว 3–30 ตัว"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
