@@ -479,6 +479,8 @@ function RecEditor({
   const c = m.character[rec.characterId]
   const activeRings = m.rings.filter((r) => r.active)
   const activeStats = m.stats.filter((s) => s.active)
+  // The next stat not chosen yet; none when master data has no stats or all are taken.
+  const freeStat = activeStats.find((st) => !rec.stats.some((x) => x.statId === st.id))
   const updateRing = (i: number, patch: Partial<RingOption>) => onChange({ rings: rec.rings.map((r, j) => (j === i ? { ...r, ...patch } : r)) })
 
   return (
@@ -529,17 +531,19 @@ function RecEditor({
           </div>
         ))}
         {rec.stats.length < 4 && (
-          <button
-            type="button"
-            className="btn btn-sm"
-            style={{ alignSelf: 'flex-start' }}
-            onClick={() => {
-              const free = activeStats.find((st) => !rec.stats.some((x) => x.statId === st.id))
-              if (free) onChange({ stats: [...rec.stats, { statId: free.id }] })
-            }}
-          >
-            <Icon name="plus" size={14} /> เพิ่มสเตตัส
-          </button>
+          <div className="row wrap">
+            <button
+              type="button"
+              className="btn btn-sm"
+              disabled={!freeStat}
+              onClick={() => freeStat && onChange({ stats: [...rec.stats, { statId: freeStat.id }] })}
+            >
+              <Icon name="plus" size={14} /> เพิ่มสเตตัส
+            </button>
+            {!freeStat && (
+              <span className="small muted">{activeStats.length === 0 ? 'ยังไม่มีสเตตัสใน Master Data (Admin → นำเข้าไฟล์)' : 'เลือกครบทุกสเตตัสแล้ว'}</span>
+            )}
+          </div>
         )}
       </div>
 
@@ -626,6 +630,7 @@ function RecEditor({
           >
             <Icon name="plus" size={14} /> เพิ่มตัวเลือกแหวน
           </button>
+          {activeRings.length === 0 && <span className="small muted">ยังไม่มีแหวนใน Master Data</span>}
           <label className="checkbox small">
             <input type="checkbox" checked={rec.ringStackRequired} onChange={(e) => onChange({ ringStackRequired: e.target.checked })} />
             ต้องซ้อนแหวนเท่านั้น
