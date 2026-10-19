@@ -1,14 +1,18 @@
 # 7K Re Community — Web client
 
-React + TypeScript + Vite. Talks to the Go API in `../api`; in development Vite proxies `/api` and `/media` to it.
+React + TypeScript + Vite. Talks to the Go API (separate `api` repo); in development Vite proxies `/api` and `/media`
+to it, and in production the static host rewrites `/api/*` to it, so the browser always sees one origin.
 
 ## Run
 
 ```bash
-docker compose up -d db                       # repo root: PostgreSQL on :5433
-(cd api && go run ./cmd/seed)                 # sample users + groups (password123); add -sample for game data
-(cd api && go run ./cmd/server)               # API on :8787
-cd web && npm install && npm run dev          # http://localhost:5173
+# in the api repo
+docker compose up -d db          # PostgreSQL on :5433
+go run ./cmd/seed                # sample users + groups (password123); add -sample for game data
+go run ./cmd/server              # API on :8787
+
+# here
+npm install && npm run dev       # http://localhost:5173
 ```
 
 `API_URL` overrides the proxy target (default `http://localhost:8787`).
@@ -30,8 +34,8 @@ In development a **Dev** button (bottom left) signs in as any seeded user, to ch
 | สายฟ้า | fah | USER | owner ห้องลับสายฟ้า |
 | โดนแบน | banned | USER (suspended) | — |
 
-In production the Go API serves the built app (`npm run build` → `dist/`) from the same origin; see the root
-`Dockerfile`.
+Production: a static site built with `npm ci && npm run build` (publish `dist/`) that rewrites `/api/*` to the API
+and everything else to `/index.html` — see `docs/deploy.md` in the api repo.
 
 ## Structure
 
